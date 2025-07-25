@@ -3,7 +3,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Leaf, ScanLine, Coins, ArrowRight, Info, User, Zap } from 'lucide-react';
+import { Leaf, ScanLine, Coins, ArrowRight, Info, User, Zap, Package } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -32,6 +32,11 @@ function AnimatedCounter({ end, duration = 2000, className }: { end: number; dur
 export default function Home() {
   const { user } = useAuth();
   const features = [
+    {
+      icon: <Package className="h-10 w-10 text-accent" />,
+      title: 'Get Your ClickBag',
+      description: 'Receive your bag via package, by following us on Instagram (@click_bag_), or get it on the street. Sponsored messages on the bag fund tree planting at no cost to you.',
+    },
     {
       icon: <ScanLine className="h-10 w-10 text-accent" />,
       title: 'Scan & Upload',
@@ -88,7 +93,7 @@ export default function Home() {
             <h2 className="font-headline text-3xl md:text-4xl font-bold">Simple Steps to a Greener World</h2>
             <p className="text-muted-foreground md:text-lg mt-2">Making an impact has never been easier.</p>
           </div>
-          <div className="grid gap-8 md:grid-cols-3 mt-12">
+          <div className="grid gap-8 md:grid-cols-1 lg:grid-cols-4 mt-12">
             {features.map((feature, index) => (
               <Card key={index} className="text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <CardHeader>
