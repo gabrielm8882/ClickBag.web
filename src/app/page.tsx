@@ -53,11 +53,11 @@ export default function Home() {
         <div className="container mx-auto px-4 md:px-6 text-center">
           <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tighter text-primary">
             Turn your{' '}
-            <span className="font-cursive text-[2.4rem] md:text-[3.8rem] text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
+            <span className="font-cursive text-[2.7rem] md:text-[4.7rem] text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
               purchases
             </span>{' '}
             into planted{' '}
-            <span className="font-cursive text-[2.4rem] md:text-[3.8rem] text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
+            <span className="font-cursive text-[2.7rem] md:text-[4.7rem] text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
               trees
             </span>
           </h1>
@@ -180,7 +180,6 @@ export default function Home() {
           </Link>
         </div>
       </section>
-
     </div>
   );
 }
