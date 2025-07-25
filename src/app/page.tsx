@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Leaf, ScanLine, Coins, ArrowRight } from 'lucide-react';
+import { Leaf, ScanLine, Coins, ArrowRight, Info, User, Zap } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -75,8 +75,54 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Effortless Impact Section */}
+      <section className="w-full py-20 md:py-24">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="text-center max-w-3xl mx-auto">
+            <h2 className="font-headline text-3xl md:text-4xl font-bold">
+              Change the world without changing your routine.
+            </h2>
+            <p className="text-muted-foreground md:text-lg mt-4">
+              What if you could make a real impact without spending extra time, laying a dime, or even moving a muscle? ClickBag is a set-it-and-forget-it system for positive change.
+            </p>
+          </div>
+          <div className="grid gap-8 md:grid-cols-3 mt-12 text-center">
+            <Card className="border-0 shadow-none">
+                <CardHeader>
+                    <div className="mx-auto bg-accent/10 p-4 rounded-full w-fit">
+                        <Info className="h-8 w-8 text-accent"/>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground">Every second, 160,000 plastic bags are used around the world. Your choice matters.</p>
+                </CardContent>
+            </Card>
+            <Card className="border-0 shadow-none">
+                <CardHeader>
+                    <div className="mx-auto bg-accent/10 p-4 rounded-full w-fit">
+                        <Zap className="h-8 w-8 text-accent"/>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground">It's a one-time setup. Once you're in, you can contribute effortlessly forever.</p>
+                </CardContent>
+            </Card>
+            <Card className="border-0 shadow-none">
+                <CardHeader>
+                    <div className="mx-auto bg-accent/10 p-4 rounded-full w-fit">
+                        <User className="h-8 w-8 text-accent"/>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground">This project was built by a 16-year-old from Spain with a passion for our planet.</p>
+                </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* How It Works Section */}
-      <section id="how-it-works" className="w-full py-20 md:py-24">
+      <section id="how-it-works" className="w-full py-20 md:py-24 bg-secondary">
         <div className="container mx-auto px-4 md:px-6">
           <div className="text-center">
             <h2 className="font-headline text-3xl md:text-4xl font-bold">Simple Steps to a Greener World</h2>
@@ -99,7 +145,7 @@ export default function Home() {
       </section>
 
       {/* Mission and Sponsors Section */}
-      <section className="w-full py-20 md:py-24 bg-secondary">
+      <section className="w-full py-20 md:py-24">
         <div className="container mx-auto grid md:grid-cols-2 gap-12 px-4 md:px-6 items-center">
           <div>
             <h2 className="font-headline text-3xl md:text-4xl font-bold">Our Mission & Our Sponsors</h2>
@@ -128,7 +174,7 @@ export default function Home() {
       </section>
       
       {/* Aggregate Progress Display */}
-      <section className="w-full py-20 md:py-32">
+      <section className="w-full py-20 md:py-32 bg-secondary">
         <div className="container mx-auto px-4 md:px-6 text-center">
             <h2 className="font-headline text-3xl md:text-4xl font-bold">Our Collective Impact</h2>
             <p className="text-muted-foreground md:text-lg mt-2 mb-8">
@@ -150,7 +196,7 @@ export default function Home() {
       </section>
 
       {/* Join Project Section */}
-      <section className="w-full py-20 bg-secondary">
+      <section className="w-full py-20">
         <div className="container mx-auto px-4 md:px-6 text-center">
           <h2 className="font-headline text-3xl md:text-4xl font-bold">Ready to Make an Impact?</h2>
           <p className="text-muted-foreground md:text-lg mt-2 mb-8">
