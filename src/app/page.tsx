@@ -70,7 +70,7 @@ export default function Home() {
             </span>
           </h1>
           <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl mt-4">
-            What if you could make change without spending time, laying a dime or moving a muscle?
+            What if you could reforest without spending time, laying a dime or moving a muscle?
           </p>
           <div className="mt-8">
             <Link href="/register">
