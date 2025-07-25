@@ -72,6 +72,9 @@ export default function Home() {
               </Button>
             </Link>
           </div>
+          <p className="mx-auto max-w-[700px] text-muted-foreground md:text-lg mt-6 italic">
+            What if you could make change without spending much time, laying a dime or moving a muscle?
+          </p>
         </div>
       </section>
 
