@@ -41,11 +41,24 @@ const validateReceiptImagePrompt = ai.definePrompt({
   name: 'validateReceiptImagePrompt',
   input: {schema: ValidateReceiptImageInputSchema},
   output: {schema: ValidateReceiptImageOutputSchema},
-  prompt: `You are an AI assistant that validates user-submitted photos of purchases and receipts for a sustainability rewards program.
+  prompt: `You are an AI assistant that validates user-submitted photos for a sustainability rewards program.
 
-You will determine if the provided purchase and receipt photos are valid and if so, award ClickPoints to the user.
+You must perform the following checks:
+1.  Analyze the first photo and ensure it shows a series of products inside a shopping bag. For now, any shopping bag is acceptable.
+2.  Analyze the second photo and ensure it is a receipt for a purchase.
+3.  The receipt must be for a purchase made on the current date.
+4.  If possible, determine the location from the receipt and see if it matches the user's location.
+5.  Both photos must clearly correspond to the same purchase.
 
-You will also attempt to determine the geolocation of the purchase, if possible.
+If all checks pass:
+- Set 'isValid' to true.
+- Award exactly 10 ClickPoints.
+- Provide a detailed success message in 'validationDetails'.
+
+If any check fails:
+- Set 'isValid' to false.
+- Award 0 ClickPoints.
+- Clearly explain the reason for the failure in 'validationDetails'.
 
 Here's the purchase photo:
 {{media url=purchasePhotoDataUri}}
