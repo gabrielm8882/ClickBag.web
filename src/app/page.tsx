@@ -75,52 +75,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Effortless Impact Section */}
-      <section className="w-full py-20 md:py-24">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="font-headline text-3xl md:text-4xl font-bold">
-              Change the world without changing your routine.
-            </h2>
-            <p className="text-muted-foreground md:text-lg mt-4">
-              What if you could make a real impact without spending extra time, laying a dime, or even moving a muscle? ClickBag is a set-it-and-forget-it system for positive change.
-            </p>
-          </div>
-          <div className="grid gap-8 md:grid-cols-3 mt-12 text-center">
-            <Card className="border-0 shadow-none">
-                <CardHeader>
-                    <div className="mx-auto bg-accent/10 p-4 rounded-full w-fit">
-                        <Info className="h-8 w-8 text-accent"/>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground">Every second, 160,000 plastic bags are used around the world. Your choice matters.</p>
-                </CardContent>
-            </Card>
-            <Card className="border-0 shadow-none">
-                <CardHeader>
-                    <div className="mx-auto bg-accent/10 p-4 rounded-full w-fit">
-                        <Zap className="h-8 w-8 text-accent"/>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground">It's a one-time setup. Once you're in, you can contribute effortlessly forever.</p>
-                </CardContent>
-            </Card>
-            <Card className="border-0 shadow-none">
-                <CardHeader>
-                    <div className="mx-auto bg-accent/10 p-4 rounded-full w-fit">
-                        <User className="h-8 w-8 text-accent"/>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground">This project was built by a 16-year-old from Spain with a passion for our planet.</p>
-                </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
       {/* How It Works Section */}
       <section id="how-it-works" className="w-full py-20 md:py-24 bg-secondary">
         <div className="container mx-auto px-4 md:px-6">
@@ -159,6 +113,20 @@ export default function Home() {
               initiatives. It's a win-win-win: you get a free reusable bag, sponsors reach a conscious audience, and
               together, we heal the planet.
             </p>
+            <div className="mt-6 space-y-4">
+                <div className="flex items-start gap-4">
+                    <Info className="h-6 w-6 text-accent mt-1 shrink-0"/>
+                    <p className="text-muted-foreground">Every second, 160,000 plastic bags are used around the world. Your choice to use a ClickBag matters.</p>
+                </div>
+                <div className="flex items-start gap-4">
+                    <Zap className="h-6 w-6 text-accent mt-1 shrink-0"/>
+                    <p className="text-muted-foreground">It's a one-time setup. Once you're in, you can contribute effortlessly forever without hassle.</p>
+                </div>
+                <div className="flex items-start gap-4">
+                    <User className="h-6 w-6 text-accent mt-1 shrink-0"/>
+                    <p className="text-muted-foreground">This project was built by a 16-year-old from Spain with a passion for our planet.</p>
+                </div>
+            </div>
           </div>
           <div>
             <Image
