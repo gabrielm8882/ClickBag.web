@@ -14,7 +14,7 @@ export function Footer() {
         <div className="flex items-center gap-4">
           <Link href="/#how-it-works" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">How it Works</Link>
           <Link href="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">Dashboard</Link>
-          <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} ClickImpact</p>
+          <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} ClickBag</p>
         </div>
       </div>
     </footer>

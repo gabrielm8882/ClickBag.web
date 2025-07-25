@@ -6,7 +6,7 @@ import { Footer } from '@/components/layout/footer';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'ClickImpact',
+  title: 'ClickBag',
   description: 'Turn Your Purchases into Planted Trees.',
 };
 

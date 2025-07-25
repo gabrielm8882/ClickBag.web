@@ -55,7 +55,7 @@ export default function Home() {
             Turn Your Purchases into Planted Trees
           </h1>
           <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl mt-4">
-            Join ClickImpact and make a difference with every purchase. Use our sponsored bags, earn points, and help us
+            Join ClickBag and make a difference with every purchase. Use our sponsored bags, earn points, and help us
             reforest the planet.
           </p>
           <div className="mt-8">
@@ -97,7 +97,7 @@ export default function Home() {
           <div>
             <h2 className="font-headline text-3xl md:text-4xl font-bold">Our Mission & Our Sponsors</h2>
             <p className="text-muted-foreground mt-4">
-              At ClickImpact, we believe that small actions can lead to massive change. Our mission is to transform
+              At ClickBag, we believe that small actions can lead to massive change. Our mission is to transform
               everyday purchases into a force for environmental good. We replace single-use bags with our reusable
               ClickBags, funded by conscious sponsors.
             </p>
