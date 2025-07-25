@@ -52,11 +52,11 @@ export default function Home() {
       <section className="w-full py-20 md:py-32 bg-secondary">
         <div className="container mx-auto px-4 md:px-6 text-center">
           <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tighter text-primary">
-            Turn Your{' '}
+            Turn your{' '}
             <span className="font-cursive text-5xl md:text-7xl text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic mr-2">
               Purchases
             </span>{' '}
-            into Planted{' '}
+            into planted{' '}
             <span className="font-cursive text-5xl md:text-7xl text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
               Trees
             </span>
