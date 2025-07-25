@@ -31,7 +31,7 @@ export default function LoginPage() {
         </div>
       </CardContent>
       <CardFooter className="flex flex-col">
-        <Button className="w-full">Sign in</Button>
+        <Button className="w-full shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow">Sign in</Button>
         <div className="mt-4 text-center text-sm">
           Don&apos;t have an account?{' '}
           <Link href="/register" className="underline text-accent-foreground hover:text-accent">

@@ -35,7 +35,7 @@ export default function RegisterPage() {
         </div>
       </CardContent>
       <CardFooter className="flex flex-col">
-        <Button className="w-full">Create Account</Button>
+        <Button className="w-full shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow">Create Account</Button>
         <div className="mt-4 text-center text-sm">
           Already have an account?{' '}
           <Link href="/login" className="underline text-accent-foreground hover:text-accent">

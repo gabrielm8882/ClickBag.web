@@ -60,7 +60,7 @@ export default function Home() {
           </p>
           <div className="mt-8">
             <Link href="/register">
-              <Button size="lg">
+              <Button size="lg" className="shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow">
                 Get Started <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
@@ -150,7 +150,7 @@ export default function Home() {
             Become a part of the ClickBag community and start turning your actions into a greener planet.
           </p>
           <Link href="/register">
-            <Button size="lg">
+            <Button size="lg" className="shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow">
               Join our project now <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
