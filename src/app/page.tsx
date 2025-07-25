@@ -70,8 +70,7 @@ export default function Home() {
             </span>
           </h1>
           <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl mt-4">
-            Join ClickBag and make a difference with every purchase. Use our sponsored bags, earn points, and help us
-            reforest the planet.
+            What if you could make change without spending time, laying a dime or moving a muscle?
           </p>
           <div className="mt-8">
             <Link href="/register">
@@ -80,9 +79,6 @@ export default function Home() {
               </Button>
             </Link>
           </div>
-          <p className="mx-auto max-w-[700px] text-muted-foreground md:text-lg mt-8 italic">
-            What if you could make change without spending time, laying a dime or moving a muscle?
-          </p>
         </div>
       </section>
 
