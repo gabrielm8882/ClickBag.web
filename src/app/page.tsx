@@ -53,7 +53,7 @@ export default function Home() {
         <div className="container mx-auto px-4 md:px-6 text-center">
           <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tighter text-primary">
             Turn your{' '}
-            <span className="font-cursive text-[2.4rem] md:text-[3.8rem] text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic mr-1">
+            <span className="font-cursive text-[2.4rem] md:text-[3.8rem] text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
               purchases
             </span>{' '}
             into planted{' '}
@@ -72,7 +72,7 @@ export default function Home() {
               </Button>
             </Link>
           </div>
-          <p className="mx-auto max-w-[700px] text-muted-foreground md:text-lg mt-6 italic">
+          <p className="mx-auto max-w-[700px] text-muted-foreground md:text-lg mt-8 italic">
             What if you could make change without spending time, laying a dime or moving a muscle?
           </p>
         </div>
@@ -161,7 +161,7 @@ export default function Home() {
                     <Coins className="h-12 w-12 text-accent mx-auto mb-4" />
                     <h3 className="font-headline text-2xl font-semibold mb-2">Total ClickPoints Earned</h3>
                     <AnimatedCounter end={0} className="font-headline text-5xl md:text-7xl font-bold text-primary blur-lg" />
-                </Card>
+                </card>
             </div>
         </div>
       </section>
@@ -174,7 +174,7 @@ export default function Home() {
             Become a part of the ClickBag community and start turning your actions into a greener planet.
           </p>
           <Link href="/register">
-            <Button size="lg" className="shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow">
+            <Button size="lg" className="shadow-lg shadow-accent/ ৫০ hover:shadow-accent/70 transition-shadow">
               Join our project now <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
