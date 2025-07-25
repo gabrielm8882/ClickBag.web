@@ -1,0 +1,17 @@
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCw411oL8AA1WkFucgL-MFXFWaJvFmj3ww",
+  authDomain: "clickbag.firebaseapp.com",
+  projectId: "clickbag",
+  storageBucket: "clickbag.firebasestorage.app",
+  messagingSenderId: "344787097382",
+  appId: "1:344787097382:web:fee267eccab031c50813e7",
+};
+
+// Initialize Firebase
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const auth = getAuth(app);
+
+export { app, auth };
