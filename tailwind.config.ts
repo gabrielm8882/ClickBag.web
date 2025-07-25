@@ -20,7 +20,7 @@ export default {
         body: ['Open Sans', 'sans-serif'],
         headline: ['Roboto', 'sans-serif'],
         code: ['monospace'],
-        cursive: ['Pacifico', 'cursive'],
+        cursive: ['Playfair Display', 'serif'],
       },
       colors: {
         background: 'hsl(var(--background))',
