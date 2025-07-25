@@ -25,9 +25,6 @@ export function Header() {
           <Link href="/login">
             <Button variant="ghost">Login</Button>
           </Link>
-          <Link href="/register">
-            <Button>Register</Button>
-          </Link>
         </div>
       </div>
     </header>

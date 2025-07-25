@@ -142,6 +142,21 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Join Project Section */}
+      <section className="w-full py-20 bg-secondary">
+        <div className="container mx-auto px-4 md:px-6 text-center">
+          <h2 className="font-headline text-3xl md:text-4xl font-bold">Ready to Make an Impact?</h2>
+          <p className="text-muted-foreground md:text-lg mt-2 mb-8">
+            Become a part of the ClickBag community and start turning your actions into a greener planet.
+          </p>
+          <Link href="/register">
+            <Button size="lg">
+              Join our project now <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
+        </div>
+      </section>
+
     </div>
   );
 }
