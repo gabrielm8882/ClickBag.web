@@ -5,7 +5,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyCw411oL8AA1WkFucgL-MFXFWaJvFmj3ww",
   authDomain: "clickbag.firebaseapp.com",
   projectId: "clickbag",
-  storageBucket: "clickbag.firebasestorage.app",
+  storageBucket: "clickbag.appspot.com",
   messagingSenderId: "344787097382",
   appId: "1:344787097382:web:fee267eccab031c50813e7",
 };
