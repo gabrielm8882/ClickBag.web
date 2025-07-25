@@ -131,12 +131,12 @@ export default function Home() {
                 <Card className="p-8 shadow-lg">
                     <Leaf className="h-12 w-12 text-accent mx-auto mb-4" />
                     <h3 className="font-headline text-2xl font-semibold mb-2">Trees Planted</h3>
-                    <AnimatedCounter end={12843} className="font-headline text-5xl md:text-7xl font-bold text-primary blur-md" />
+                    <AnimatedCounter end={0} className="font-headline text-5xl md:text-7xl font-bold text-primary blur-md" />
                 </Card>
                 <Card className="p-8 shadow-lg">
                     <Coins className="h-12 w-12 text-accent mx-auto mb-4" />
                     <h3 className="font-headline text-2xl font-semibold mb-2">Total ClickPoints Earned</h3>
-                    <AnimatedCounter end={1284300} className="font-headline text-5xl md:text-7xl font-bold text-primary blur-md" />
+                    <AnimatedCounter end={0} className="font-headline text-5xl md:text-7xl font-bold text-primary blur-md" />
                 </Card>
             </div>
         </div>
