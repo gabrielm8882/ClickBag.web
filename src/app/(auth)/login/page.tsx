@@ -70,8 +70,8 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
+    const provider = new GoogleAuthProvider();
     try {
-      const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       toast({
         title: "Login Successful",

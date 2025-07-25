@@ -74,8 +74,8 @@ export default function RegisterPage() {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
+    const provider = new GoogleAuthProvider();
     try {
-      const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       toast({
         title: "Account Created",
