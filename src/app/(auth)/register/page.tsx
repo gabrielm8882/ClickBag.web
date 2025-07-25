@@ -37,6 +37,7 @@ const registerSchema = z.object({
 
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -72,7 +73,7 @@ export default function RegisterPage() {
   };
 
   const handleGoogleSignIn = async () => {
-    setIsLoading(true);
+    setIsGoogleLoading(true);
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
@@ -88,7 +89,7 @@ export default function RegisterPage() {
         description: error.message,
       });
     } finally {
-      setIsLoading(false);
+      setIsGoogleLoading(false);
     }
   };
 
@@ -101,7 +102,7 @@ export default function RegisterPage() {
         </CardDescription>
       </CardHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <CardContent className="grid gap-4">
             <FormField
               control={form.control}
@@ -142,23 +143,23 @@ export default function RegisterPage() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow" disabled={isLoading}>
+          </CardContent>
+          <CardFooter className="flex-col gap-4">
+            <Button type="submit" className="w-full shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow" disabled={isLoading || isGoogleLoading}>
               {isLoading ? <Loader2 className="animate-spin" /> : 'Create Account'}
             </Button>
-             <Button variant="outline" type="button" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
-              {isLoading ? <Loader2 className="animate-spin" /> : 'Sign up with Google'}
+             <Button variant="outline" type="button" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
+              {isGoogleLoading ? <Loader2 className="animate-spin" /> : 'Sign up with Google'}
             </Button>
-          </CardContent>
+            <div className="mt-4 text-center text-sm w-full">
+              Already have an account?{' '}
+              <Link href="/login" className="underline text-accent-foreground hover:text-accent">
+                Login
+              </Link>
+            </div>
+          </CardFooter>
         </form>
       </Form>
-      <CardFooter>
-        <div className="mt-4 text-center text-sm w-full">
-          Already have an account?{' '}
-          <Link href="/login" className="underline text-accent-foreground hover:text-accent">
-            Login
-          </Link>
-        </div>
-      </CardFooter>
     </Card>
   );
 }
