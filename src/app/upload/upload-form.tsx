@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, UploadCloud, X, CheckCircle } from 'lucide-react';
+import { Loader2, UploadCloud, X, CheckCircle, AlertTriangle, MapPin } from 'lucide-react';
 import { handleImageUpload } from '@/lib/actions';
 import type { ValidateReceiptImageOutput } from '@/ai/flows/validate-receipt-image';
 import { useToast } from '@/hooks/use-toast';
@@ -120,11 +120,13 @@ export default function UploadForm() {
             </Button>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-md">
-            <UploadCloud className="h-12 w-12 text-muted-foreground" />
-            <p className="mt-2 text-sm text-muted-foreground">Drag & drop or click to upload</p>
-            <Input id={id} type="file" className="sr-only" onChange={onChange} accept="image/*" />
-          </div>
+          <label htmlFor={id} className="cursor-pointer">
+            <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-md hover:border-accent transition-colors">
+              <UploadCloud className="h-12 w-12 text-muted-foreground" />
+              <p className="mt-2 text-sm text-muted-foreground">Drag & drop or click to upload</p>
+              <Input id={id} type="file" className="sr-only" onChange={onChange} accept="image/*" />
+            </div>
+          </label>
         )}
       </Card>
     </div>
@@ -140,12 +142,13 @@ export default function UploadForm() {
 
         {error && (
           <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
-        <Button type="submit" className="w-full shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow" size="lg" disabled={isLoading}>
+        <Button type="submit" className="w-full shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow" size="lg" disabled={isLoading || !purchasePhoto || !receiptPhoto}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -162,10 +165,14 @@ export default function UploadForm() {
           <AlertDialogContent>
             <AlertDialogHeader>
               <div className="flex justify-center mb-4">
-                <CheckCircle className="h-16 w-16 text-green-500"/>
+                 {result.isValid ? (
+                    <CheckCircle className="h-16 w-16 text-green-500"/>
+                  ) : (
+                    <AlertTriangle className="h-16 w-16 text-destructive"/>
+                  )}
               </div>
               <AlertDialogTitle className="text-center font-headline text-2xl">
-                {result.isValid ? 'Validation Successful!' : 'Validation Complete'}
+                {result.isValid ? 'Validation Successful!' : 'Validation Failed'}
               </AlertDialogTitle>
               <AlertDialogDescription className="text-center">
                 {result.isValid
@@ -173,11 +180,21 @@ export default function UploadForm() {
                   : 'There was an issue with your submission.'}
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <div className="my-4">
-              <p className="font-semibold">AI Analysis:</p>
-              <p className="text-sm text-muted-foreground p-3 bg-secondary rounded-md mt-1">{result.validationDetails}</p>
+            <div className="my-4 space-y-4">
+              <div>
+                <p className="font-semibold text-sm">AI Analysis:</p>
+                <p className="text-sm text-muted-foreground p-3 bg-secondary rounded-md mt-1">{result.validationDetails}</p>
+              </div>
+              {result.geolocation && (
+                 <div>
+                    <p className="font-semibold text-sm">Purchase Location:</p>
+                    <div className="text-sm text-muted-foreground p-3 bg-secondary rounded-md mt-1 flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-accent"/>
+                      <span>{result.geolocation}</span>
+                    </div>
+                </div>
+              )}
             </div>
-             {result.geolocation && <p className="text-sm text-muted-foreground">Purchase Location: {result.geolocation}</p>}
             <AlertDialogFooter>
               <AlertDialogAction onClick={() => setResult(null)} className="w-full">
                 Close

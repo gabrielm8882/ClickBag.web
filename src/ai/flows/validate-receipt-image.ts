@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { determineGeolocation } from './determine-geolocation';
 
 const ValidateReceiptImageInputSchema = z.object({
   purchasePhotoDataUri: z
@@ -43,12 +44,12 @@ const validateReceiptImagePrompt = ai.definePrompt({
   output: {schema: ValidateReceiptImageOutputSchema},
   prompt: `You are an AI assistant that validates user-submitted photos for a sustainability rewards program.
 
-You must perform the following checks:
-1.  Analyze the first photo and ensure it shows a series of products inside a shopping bag. For now, any shopping bag is acceptable.
-2.  Analyze the second photo and ensure it is a receipt for a purchase.
-3.  The receipt must be for a purchase made on the current date.
-4.  If possible, determine the location from the receipt and see if it matches the user's location.
-5.  Both photos must clearly correspond to the same purchase.
+You must perform the following checks with extreme scrutiny:
+1.  **Purchase Photo Analysis**: Analyze the first photo. It MUST show a series of products inside a physical shopping bag.
+2.  **Receipt Photo Analysis**: Analyze the second photo. It MUST be a clear, unaltered photograph of a real paper receipt for a purchase.
+3.  **Authenticity Check**: Both images must be genuine photographs. They CANNOT be screenshots, digital documents, or AI-generated images. Scrutinize them for any signs of digital manipulation or artificial generation. If you suspect an image is not a real photo, you must reject the submission.
+4.  **Date Verification**: The receipt must be for a purchase made on the current date.
+5.  **Correspondence Check**: Both photos must clearly correspond to the same purchase event.
 
 If all checks pass:
 - Set 'isValid' to true.
@@ -58,7 +59,7 @@ If all checks pass:
 If any check fails:
 - Set 'isValid' to false.
 - Award 0 ClickPoints.
-- Clearly explain the reason for the failure in 'validationDetails'.
+- Clearly explain the specific reason for the failure in 'validationDetails'.
 
 Here's the purchase photo:
 {{media url=purchasePhotoDataUri}}
@@ -76,8 +77,23 @@ const validateReceiptImageFlow = ai.defineFlow(
     inputSchema: ValidateReceiptImageInputSchema,
     outputSchema: ValidateReceiptImageOutputSchema,
   },
-  async input => {
-    const {output} = await validateReceiptImagePrompt(input);
-    return output!;
+  async (input) => {
+    // Perform validation and geolocation in parallel
+    const [validationResult, geolocationResult] = await Promise.all([
+      validateReceiptImagePrompt(input),
+      determineGeolocation({ photoDataUri: input.receiptPhotoDataUri }),
+    ]);
+
+    const output = validationResult.output;
+    if (!output) {
+      throw new Error('AI validation failed to produce an output.');
+    }
+    
+    // If the submission is valid, add the geolocation to the output.
+    if (output.isValid && geolocationResult?.geolocation) {
+      output.geolocation = geolocationResult.geolocation;
+    }
+
+    return output;
   }
 );
