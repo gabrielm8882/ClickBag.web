@@ -46,10 +46,11 @@ const validateReceiptImagePrompt = ai.definePrompt({
 
 You must perform the following checks with extreme scrutiny:
 1.  **Purchase Photo Analysis**: Analyze the first photo. It MUST show a series of products inside a physical shopping bag.
-2.  **Receipt Photo Analysis**: Analyze the second photo. It MUST be a clear, unaltered photograph of a real paper receipt for a purchase.
+2.  **Receipt Photo Analysis**: Analyze the second photo. It MUST be a clear, unaltered photograph of a real paper receipt for a purchase. The details like time and exact location can be approximate, but the receipt must be legible.
 3.  **Authenticity Check**: Both images must be genuine photographs. They CANNOT be screenshots, digital documents, or AI-generated images. Scrutinize them for any signs of digital manipulation or artificial generation. If you suspect an image is not a real photo, you must reject the submission.
-4.  **Date Verification**: The receipt must be for a purchase made on the current date.
+4.  **Date Verification**: The receipt must be for a purchase made on the current date. A slight variation in the time of day is acceptable.
 5.  **Correspondence Check**: Both photos must clearly correspond to the same purchase event.
+6.  **Duplicate Check**: Be extra vigilant for submissions that look very similar to each other. Submissions are checked against a database of photos from the last 15 days. If you suspect this is a duplicate, reject it.
 
 If all checks pass:
 - Set 'isValid' to true.
