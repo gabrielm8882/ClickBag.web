@@ -38,17 +38,23 @@ export async function validateReceiptImage(input: ValidateReceiptImageInput): Pr
   return validateReceiptImageFlow(input);
 }
 
+// Define an extended schema for the prompt that includes the current date.
+const PromptInputSchema = ValidateReceiptImageInputSchema.extend({
+  currentDate: z.string().describe('The current date on the server.'),
+});
+
 const validateReceiptImagePrompt = ai.definePrompt({
   name: 'validateReceiptImagePrompt',
-  input: {schema: ValidateReceiptImageInputSchema},
+  input: {schema: PromptInputSchema},
   output: {schema: ValidateReceiptImageOutputSchema},
   prompt: `You are an AI assistant that validates user-submitted photos for a sustainability rewards program.
+The current server date is {{currentDate}}. You MUST use this as the reference for "today".
 
 You must perform the following checks with extreme scrutiny:
 1.  **Purchase Photo Analysis**: Analyze the first photo. It MUST show a series of products inside a physical shopping bag.
 2.  **Receipt Photo Analysis**: Analyze the second photo. It MUST be a clear, unaltered photograph of a real paper receipt for a purchase. The details like time and exact location can be approximate, but the receipt must be legible.
 3.  **Authenticity Check**: Both images must be genuine photographs. They CANNOT be screenshots, digital documents, or AI-generated images. Scrutinize them for any signs of digital manipulation or artificial generation. If you suspect an image is not a real photo, you must reject the submission.
-4.  **Date Verification**: The receipt must be for a purchase made on the current date. A slight variation in the time of day is acceptable.
+4.  **Date Verification**: The receipt must be for a purchase made on the current date provided ({{currentDate}}). A slight variation in the time of day is acceptable, but it must be the same calendar day.
 5.  **Correspondence Check**: Both photos must clearly correspond to the same purchase event.
 6.  **Duplicate Check**: Be extra vigilant for submissions that look very similar to each other. Submissions are checked against a database of photos from the last 15 days. If you suspect this is a duplicate, reject it.
 
@@ -79,9 +85,12 @@ const validateReceiptImageFlow = ai.defineFlow(
     outputSchema: ValidateReceiptImageOutputSchema,
   },
   async (input) => {
+    // Get the current date on the server to pass to the prompt.
+    const currentDate = new Date().toISOString().split('T')[0];
+
     // Perform validation and geolocation in parallel
     const [validationResult, geolocationResult] = await Promise.all([
-      validateReceiptImagePrompt(input),
+      validateReceiptImagePrompt({ ...input, currentDate }),
       determineGeolocation({ photoDataUri: input.receiptPhotoDataUri }),
     ]);
 
