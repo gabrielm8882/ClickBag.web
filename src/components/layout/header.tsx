@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -41,12 +42,16 @@ export function Header() {
           </Link>
         </div>
         <nav className="flex flex-1 items-center space-x-4">
-          <Link href="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-            Dashboard
-          </Link>
-          <Link href="/upload" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-            Upload
-          </Link>
+          {user && (
+            <>
+              <Link href="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                Dashboard
+              </Link>
+              <Link href="/upload" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                Upload
+              </Link>
+            </>
+          )}
         </nav>
         <div className="flex items-center justify-end space-x-4">
           {user ? (

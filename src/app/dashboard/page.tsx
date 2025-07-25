@@ -1,3 +1,9 @@
+
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
 import {
   Card,
   CardContent,
@@ -15,7 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Coins, Leaf, Target } from 'lucide-react';
+import { Coins, Leaf, Target, Loader2 } from 'lucide-react';
 
 const MOCK_SUBMISSIONS = [
   { date: '2024-05-20', store: 'Green Grocer', points: 120, status: 'Approved' },
@@ -31,6 +37,23 @@ const TREES_PLANTED = Math.floor(TOTAL_POINTS / POINTS_PER_TREE);
 const PROGRESS_TO_NEXT_TREE = (TOTAL_POINTS % POINTS_PER_TREE) * 100 / POINTS_PER_TREE;
 
 export default function DashboardPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-12 w-12 animate-spin text-accent" />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <h1 className="font-headline text-3xl md:text-4xl font-bold mb-8">
