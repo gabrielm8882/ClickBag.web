@@ -10,7 +10,7 @@ export function Header() {
         <div className="mr-4 flex items-center">
           <Link href="/" className="flex items-center space-x-2">
             <Leaf className="h-6 w-6 text-accent" />
-            <span className="font-bold font-headline sm:inline-block">ClickBag</span>
+            <span className="font-bold sm:inline-block">ClickBag</span>
           </Link>
         </div>
         <nav className="flex flex-1 items-center space-x-4">
@@ -21,7 +21,7 @@ export function Header() {
             Upload
           </Link>
         </nav>
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-end space-x-4">
           <Link href="/login">
             <Button variant="ghost">Login</Button>
           </Link>
