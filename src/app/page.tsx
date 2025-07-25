@@ -7,7 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
-function AnimatedCounter({ end, duration = 2000 }: { end: number; duration?: number }) {
+function AnimatedCounter({ end, duration = 2000, className }: { end: number; duration?: number, className?: string }) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ function AnimatedCounter({ end, duration = 2000 }: { end: number; duration?: num
     requestAnimationFrame(animate);
   }, [end, duration]);
 
-  return <span className="font-headline text-5xl md:text-7xl font-bold text-primary">{count.toLocaleString()}</span>;
+  return <span className={className}>{count.toLocaleString()}</span>;
 }
 
 export default function Home() {
@@ -131,12 +131,12 @@ export default function Home() {
                 <Card className="p-8 shadow-lg">
                     <Leaf className="h-12 w-12 text-accent mx-auto mb-4" />
                     <h3 className="font-headline text-2xl font-semibold mb-2">Trees Planted</h3>
-                    <AnimatedCounter end={12843} />
+                    <AnimatedCounter end={12843} className="font-headline text-5xl md:text-7xl font-bold text-primary blur-md" />
                 </Card>
                 <Card className="p-8 shadow-lg">
                     <Coins className="h-12 w-12 text-accent mx-auto mb-4" />
                     <h3 className="font-headline text-2xl font-semibold mb-2">Total ClickPoints Earned</h3>
-                    <AnimatedCounter end={1284300} />
+                    <AnimatedCounter end={1284300} className="font-headline text-5xl md:text-7xl font-bold text-primary blur-md" />
                 </Card>
             </div>
         </div>
