@@ -21,7 +21,7 @@ export function Header() {
             Upload
           </Link>
         </nav>
-        <div className="flex items-center justify-end space-x-2">
+        <div className="flex items-center justify-end">
           <Link href="/login">
             <Button variant="ghost">Login</Button>
           </Link>
