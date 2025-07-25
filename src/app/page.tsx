@@ -53,11 +53,11 @@ export default function Home() {
         <div className="container mx-auto px-4 md:px-6 text-center">
           <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tighter text-primary">
             Turn Your{' '}
-            <span className="font-cursive text-5xl md:text-6xl text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
+            <span className="font-cursive text-5xl md:text-7xl text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
               Purchases
             </span>{' '}
             into Planted{' '}
-            <span className="font-cursive text-5xl md:text-6xl text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
+            <span className="font-cursive text-5xl md:text-7xl text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
               Trees
             </span>
           </h1>
