@@ -3,7 +3,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Leaf, ScanLine, Coins, ArrowRight, Info, User, Zap, Package } from 'lucide-react';
+import { Leaf, ScanLine, Coins, ArrowRight, Info, User, Zap, Package, Handshake } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -188,6 +188,28 @@ export default function Home() {
               Join our project now <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
+        </div>
+      </section>
+
+      {/* Sponsors Section */}
+      <section id="sponsors" className="w-full py-20 md:py-24 bg-secondary">
+        <div className="container mx-auto px-4 md:px-6 text-center">
+          <Handshake className="h-12 w-12 text-accent mx-auto mb-4" />
+          <h2 className="font-headline text-3xl md:text-4xl font-bold">Are You a Sponsor?</h2>
+          <p className="text-muted-foreground md:text-lg mt-2 mb-8">
+            Help us grow our impact. If you're interested in sponsoring ClickBags, please contact us.
+          </p>
+          <p className="text-lg font-semibold">
+            DM us on Instagram:{' '}
+            <a
+              href="https://www.instagram.com/click_bag_"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent hover:underline"
+            >
+              @click_bag_
+            </a>
+          </p>
         </div>
       </section>
     </div>
