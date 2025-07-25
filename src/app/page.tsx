@@ -53,11 +53,11 @@ export default function Home() {
         <div className="container mx-auto px-4 md:px-6 text-center">
           <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tighter text-primary">
             Turn your{' '}
-            <span className="font-cursive text-[2.6rem] md:text-[4.5rem] text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
+            <span className="font-cursive text-[2.5rem] md:text-[4.3rem] text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
               purchases
             </span>{' '}
             into planted{' '}
-            <span className="font-cursive text-[2.6rem] md:text-[4.5rem] text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
+            <span className="font-cursive text-[2.5rem] md:text-[4.3rem] text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
               trees
             </span>
           </h1>
@@ -174,7 +174,7 @@ export default function Home() {
             Become a part of the ClickBag community and start turning your actions into a greener planet.
           </p>
           <Link href="/register">
-            <Button size="lg" className="shadow-lg shadow-accent/ ৫০ hover:shadow-accent/70 transition-shadow">
+            <Button size="lg" className="shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow">
               Join our project now <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>

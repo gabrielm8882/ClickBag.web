@@ -151,7 +151,7 @@ export default function RegisterPage() {
           </CardContent>
         </form>
       </Form>
-      <CardFooter className="flex-col items-start">
+      <CardFooter>
         <div className="mt-4 text-center text-sm w-full">
           Already have an account?{' '}
           <Link href="/login" className="underline text-accent-foreground hover:text-accent">
