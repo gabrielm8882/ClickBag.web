@@ -57,7 +57,7 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="w-full py-20 md:py-32 bg-secondary">
+      <section className="w-full py-20 md:py-24 bg-secondary">
         <div className="container mx-auto px-4 md:px-6 text-center">
           <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tighter text-primary">
             Turn your{' '}
@@ -87,7 +87,7 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="w-full py-20 md:py-24 bg-secondary">
+      <section id="how-it-works" className="w-full py-16 md:py-20 bg-secondary">
         <div className="container mx-auto px-4 md:px-6">
           <div className="text-center">
             <h2 className="font-headline text-3xl md:text-4xl font-bold">Simple Steps to a Greener World</h2>
@@ -110,7 +110,7 @@ export default function Home() {
       </section>
 
       {/* Mission and Sponsors Section */}
-      <section className="w-full py-20 md:py-24">
+      <section className="w-full py-16 md:py-20">
         <div className="container mx-auto grid md:grid-cols-2 gap-12 px-4 md:px-6 items-center">
           <div>
             <h2 className="font-headline text-3xl md:text-4xl font-bold">Our Mission & Our Sponsors</h2>
@@ -154,7 +154,7 @@ export default function Home() {
       
       {/* Aggregate Progress Display */}
       {user && (
-        <section className="w-full py-20 md:py-32 bg-secondary">
+        <section className="w-full py-16 md:py-24 bg-secondary">
           <div className="container mx-auto px-4 md:px-6 text-center">
               <h2 className="font-headline text-3xl md:text-4xl font-bold">Our Collective Impact</h2>
               <p className="text-muted-foreground md:text-lg mt-2 mb-8">
@@ -177,7 +177,7 @@ export default function Home() {
       )}
 
       {/* Join Project Section */}
-      <section className="w-full py-20">
+      <section className="w-full py-16">
         <div className="container mx-auto px-4 md:px-6 text-center">
           <h2 className="font-headline text-3xl md:text-4xl font-bold">Ready to Make an Impact?</h2>
           <p className="text-muted-foreground md:text-lg mt-2 mb-8">
@@ -192,7 +192,7 @@ export default function Home() {
       </section>
 
       {/* Sponsors Section */}
-      <section id="sponsors" className="w-full py-20 md:py-24 bg-secondary">
+      <section id="sponsors" className="w-full py-16 md:py-20 bg-secondary">
         <div className="container mx-auto px-4 md:px-6 text-center">
           <Handshake className="h-12 w-12 text-accent mx-auto mb-4" />
           <h2 className="font-headline text-3xl md:text-4xl font-bold">Are You a Sponsor?</h2>
