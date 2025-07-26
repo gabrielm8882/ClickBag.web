@@ -21,6 +21,7 @@ import { Loader2, UploadCloud, X, CheckCircle, AlertTriangle, MapPin, Clock } fr
 import { handleImageUpload } from '@/lib/actions';
 import type { ValidateReceiptImageOutput } from '@/ai/flows/validate-receipt-image';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface UserLocation {
   latitude: number;
@@ -221,8 +222,12 @@ export default function UploadForm() {
       </AlertDialog>
        
       {(userLocation || locationError) && (
-        <Alert className="mb-8" variant={locationError ? "destructive" : "default"}>
-          <MapPin className="h-4 w-4" />
+        <Alert className={cn("mb-8", {
+            "bg-orange-50 border-orange-200 text-orange-800 dark:bg-orange-950 dark:border-orange-800 dark:text-orange-300": !locationError
+        })} variant={locationError ? "destructive" : "default"}>
+          <MapPin className={cn("h-4 w-4", {
+              "text-orange-500 dark:text-orange-400": !locationError
+          })} />
           <AlertTitle>{locationError ? 'Location Access Denied' : 'Location Detected'}</AlertTitle>
           <AlertDescription>
             {locationError 
@@ -306,5 +311,3 @@ export default function UploadForm() {
     </>
   );
 }
-
-    
