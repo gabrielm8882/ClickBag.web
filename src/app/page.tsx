@@ -168,7 +168,7 @@ export default function Home() {
               <motion.div
                 key={index}
                 variants={FADE_UP_ANIMATION_VARIANTS}
-                whileHover={{ scale: 1.03, y: -2 }}
+                whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.2, ease: 'easeInOut' }}
               >
                 <Card className="text-center h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -261,7 +261,7 @@ export default function Home() {
                             <TooltipProvider>
                                <Tooltip>
                                 <TooltipTrigger>
-                                  <motion.div whileHover={{ scale: 1.1, rotate: -15 }} transition={{ type: 'spring', stiffness: 400, damping: 10 }}>
+                                  <motion.div whileHover={{ scale: 1.1, rotate: [-5, 5, -2, 2, 0] }} transition={{ type: 'spring', stiffness: 400, damping: 10 }}>
                                     <Lock className="h-10 w-10 text-accent [filter:drop-shadow(0_0_6px_hsl(var(--accent)))]"/>
                                   </motion.div>
                                 </TooltipTrigger>
@@ -285,7 +285,7 @@ export default function Home() {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger>
-                                   <motion.div whileHover={{ scale: 1.1, rotate: -15 }} transition={{ type: 'spring', stiffness: 400, damping: 10 }}>
+                                   <motion.div whileHover={{ scale: 1.1, rotate: [-5, 5, -2, 2, 0] }} transition={{ type: 'spring', stiffness: 400, damping: 10 }}>
                                     <Lock className="h-10 w-10 text-accent [filter:drop-shadow(0_0_6px_hsl(var(--accent)))]"/>
                                   </motion.div>
                                 </TooltipTrigger>
@@ -334,7 +334,9 @@ export default function Home() {
             variants={FADE_UP_ANIMATION_VARIANTS}
             className="container mx-auto px-4 md:px-6 text-center"
         >
-          <Handshake className="h-12 w-12 text-accent mx-auto mb-4" />
+          <motion.div whileHover={{ rotate: [0, -5, 5, -5, 5, 0] }} transition={{ duration: 0.5 }}>
+            <Handshake className="h-12 w-12 text-accent mx-auto mb-4" />
+          </motion.div>
           <h2 className="font-headline text-3xl md:text-4xl font-bold">Are you a sponsor?</h2>
           <p className="text-muted-foreground md:text-lg mt-2 mb-8 max-w-2xl mx-auto">
             Help us grow our impact. Sponsoring ClickBags is an investment in nature and a unique way to advertise your brand on a sustainable product.
