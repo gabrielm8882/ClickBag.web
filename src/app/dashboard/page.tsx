@@ -23,7 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Coins, Leaf, Target, Loader2, ShieldCheck } from 'lucide-react';
+import { Coins, Leaf, Target, ShieldCheck } from 'lucide-react';
 import { format, startOfDay, endOfDay } from 'date-fns';
 import {
   AlertDialog,
@@ -34,6 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { LeafLoader } from '@/components/ui/leaf-loader';
 
 interface Submission {
   id: string;
@@ -136,8 +137,9 @@ export default function DashboardPage() {
 
   if (loading || pageLoading || !user) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-accent" />
+      <div className="flex flex-col justify-center items-center h-screen">
+        <LeafLoader />
+        <p className="mt-4 text-muted-foreground">Loading your dashboard...</p>
       </div>
     );
   }

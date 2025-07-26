@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { Loader2 } from 'lucide-react';
+import { LeafLoader } from '@/components/ui/leaf-loader';
 
 interface AuthContextType {
   user: User | null;
@@ -30,8 +30,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-accent" />
+      <div className="flex flex-col justify-center items-center h-screen bg-background">
+        <LeafLoader />
+        <p className="mt-4 text-muted-foreground">Loading ClickBag...</p>
       </div>
     );
   }

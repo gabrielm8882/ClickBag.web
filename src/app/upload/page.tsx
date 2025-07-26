@@ -4,7 +4,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2 } from 'lucide-react';
+import { LeafLoader } from '@/components/ui/leaf-loader';
 import UploadForm from './upload-form';
 
 export default function UploadPage() {
@@ -19,8 +19,9 @@ export default function UploadPage() {
 
   if (loading || !user) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-accent" />
+      <div className="flex flex-col justify-center items-center h-screen">
+        <LeafLoader />
+        <p className="mt-4 text-muted-foreground">Loading uploader...</p>
       </div>
     );
   }
