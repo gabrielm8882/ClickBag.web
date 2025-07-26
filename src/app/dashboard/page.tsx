@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, doc, getDoc, Timestamp, startOfDay, endOfDay } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, Timestamp } from 'firebase/firestore';
 import {
   Card,
   CardContent,
@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Coins, Leaf, Target, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, startOfDay, endOfDay } from 'date-fns';
 
 interface Submission {
   id: string;
