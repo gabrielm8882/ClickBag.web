@@ -51,30 +51,31 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center justify-between">
         
-        <div className="flex items-center md:hidden">
+        {/* Left Section: Mobile Menu Trigger & Desktop Logo */}
+        <div className="flex items-center">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" className="md:hidden">
                         <Menu className="h-6 w-6" />
                         <span className="sr-only">Open Menu</span>
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="pr-0">
-                    <SheetHeader className="sr-only">
-                      <SheetTitle>Mobile Menu</SheetTitle>
-                      <SheetDescription>Navigation links for ClickBag.</SheetDescription>
+                    <SheetHeader>
+                      <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
+                      <SheetDescription className="sr-only">Navigation links for ClickBag.</SheetDescription>
                     </SheetHeader>
                     <div className="flex flex-col gap-4 py-6">
                         <Link href="/" className="flex items-center space-x-2 mb-4" passHref>
                            <SheetClose asChild>
-                             <div className="flex items-center space-x-2 pl-6">
+                             <div className="flex items-center space-x-2 pl-4">
                                 <Leaf className="h-6 w-6 text-accent" />
                                 <span className="font-bold">ClickBag</span>
                              </div>
                            </SheetClose>
                         </Link>
                         
-                        <div className="flex flex-col gap-2 pr-6">
+                        <div className="flex flex-col gap-2 pr-4">
                             {user && (
                                 <>
                                    <NavLink href="/dashboard">Dashboard</NavLink>
@@ -86,29 +87,37 @@ export function Header() {
                     </div>
                 </SheetContent>
             </Sheet>
+            <Link href="/" className="hidden md:flex items-center space-x-2 mr-6">
+                <Leaf className="h-6 w-6 text-accent" />
+                <span className="font-bold">ClickBag</span>
+            </Link>
         </div>
         
-        <Link href="/" className="hidden md:flex items-center space-x-2 mr-6">
-            <Leaf className="h-6 w-6 text-accent" />
-            <span className="font-bold">ClickBag</span>
-        </Link>
-
-        <nav className="hidden md:flex flex-1 items-center justify-center space-x-6">
-            {user && (
-              <>
-                <Link href="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                  Dashboard
-                </Link>
-                <Link href="/upload" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                  Upload
-                </Link>
-              </>
-            )}
-            <Link href="/sponsors" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                  Sponsors
+        {/* Center Section: Mobile Logo & Desktop Nav */}
+        <div className="flex-1 flex justify-center md:justify-start">
+            <Link href="/" className="flex md:hidden items-center space-x-2">
+                <Leaf className="h-6 w-6 text-accent" />
+                <span className="font-bold">ClickBag</span>
             </Link>
-        </nav>
 
+            <nav className="hidden md:flex flex-1 items-center space-x-6">
+                {user && (
+                  <>
+                    <Link href="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                      Dashboard
+                    </Link>
+                    <Link href="/upload" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                      Upload
+                    </Link>
+                  </>
+                )}
+                <Link href="/sponsors" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                      Sponsors
+                </Link>
+            </nav>
+        </div>
+
+        {/* Right Section: User Auth */}
         <div className="flex items-center">
           {user ? (
               <DropdownMenu>
