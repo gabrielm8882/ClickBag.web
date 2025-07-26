@@ -50,32 +50,26 @@ const DAILY_GOAL = 3; // 3 trees per day
 
 function AnimatedCounter({ endValue }: { endValue: number }) {
   const [count, setCount] = useState(0);
-  const prevEndValueRef = useRef(0);
 
   useEffect(() => {
-    const startValue = prevEndValueRef.current;
+    setCount(0); // Reset to 0 to re-trigger animation on every load
     let startTime: number;
     const duration = 1500; // ms
 
     const step = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const progress = timestamp - startTime;
-      const current = Math.min(startValue + (progress / duration) * (endValue - startValue), endValue);
+      const current = Math.min((progress / duration) * endValue, endValue);
       setCount(Math.floor(current));
 
       if (progress < duration) {
         requestAnimationFrame(step);
       } else {
         setCount(endValue);
-        prevEndValueRef.current = endValue;
       }
     };
 
     requestAnimationFrame(step);
-
-    return () => {
-      prevEndValueRef.current = endValue;
-    }
   }, [endValue]);
 
   return <>{count.toLocaleString()}</>;
@@ -83,49 +77,29 @@ function AnimatedCounter({ endValue }: { endValue: number }) {
 
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth();
+  const { user, userData, loading } = useAuth();
   const router = useRouter();
-  
-  // --- START OF SIMULATION DATA ---
-  const isSimulation = true; // Set to true to enable simulation
-
-  const [submissions, setSubmissions] = useState<Submission[]>([
-    { id: 'sim1', date: Timestamp.now(), geolocation: 'Test Location, World', points: 10, status: 'Approved' }
-  ]);
-  const [dailyTrees, setDailyTrees] = useState(1);
-  const [pageLoading, setPageLoading] = useState(false);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [dailyTrees, setDailyTrees] = useState(0);
+  const [pageLoading, setPageLoading] = useState(true);
   const [progressValue, setProgressValue] = useState(0);
   const [showPrivacyNotice, setShowPrivacyNotice] = useState(false);
-  
-  const simulatedUserData: UserData = {
-      totalPoints: 10,
-      totalTrees: 1,
-  };
-  const userData = isSimulation ? simulatedUserData : useAuth().userData;
-  // --- END OF SIMULATION DATA ---
-
 
   useEffect(() => {
-    if (!isSimulation && !loading && !user) {
+    if (!loading && !user) {
       router.push('/login');
     }
-  }, [user, loading, router, isSimulation]);
+  }, [user, loading, router]);
   
   useEffect(() => {
-    if (isSimulation) return; // Don't run if simulating
     const isNewUser = sessionStorage.getItem('isNewUser');
     if (isNewUser) {
       setShowPrivacyNotice(true);
       sessionStorage.removeItem('isNewUser');
     }
-  }, [isSimulation]);
+  }, []);
 
   useEffect(() => {
-    if (isSimulation) {
-      setPageLoading(false);
-      return;
-    }; // Don't run if simulating
-
     if (user) {
       setPageLoading(true);
       const today = new Date();
@@ -161,19 +135,22 @@ export default function DashboardPage() {
         unsubscribeSubmissions();
       };
     }
-  }, [user, isSimulation]);
+  }, [user]);
 
   useEffect(() => {
+    // Reset progress to 0 before animating to ensure it runs every time
+    setProgressValue(0);
     const newProgress = Math.min((dailyTrees / DAILY_GOAL) * 100, 100);
+    // Use a short timeout to allow the reset to 0 to be painted first
     const animationTimeout = setTimeout(() => setProgressValue(newProgress), 100);
     return () => clearTimeout(animationTimeout);
-  }, [dailyTrees]);
+  }, [dailyTrees, userData]); // Re-run if dailyTrees or userData changes
 
   const handleClosePrivacyNotice = () => {
     setShowPrivacyNotice(false);
   };
 
-  if ((loading || pageLoading || !user || !userData) && !isSimulation) {
+  if (loading || pageLoading || !user || !userData) {
     return (
       <div className="flex flex-col justify-center items-center h-screen">
         <LeafLoader />
