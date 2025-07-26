@@ -33,7 +33,7 @@ export default function UploadPage() {
     <div className="container mx-auto max-w-3xl py-12 px-4 md:px-6">
       <div className="text-center mb-8">
         <h1 className="font-headline text-3xl md:text-4xl font-bold">
-          Validate Your Purchase
+          Validate your purchase
         </h1>
         <p className="text-muted-foreground mt-2 md:text-lg">
           Take one clear photo with the required items to earn ClickPoints.
