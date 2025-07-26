@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,15 +51,6 @@ export default function RegisterPage() {
     },
   });
 
-  const handleGoogleRegistration = () => {
-    sessionStorage.setItem('isNewUser', 'true');
-    toast({
-      title: "Account created",
-      description: "Welcome to ClickBag!",
-    });
-    router.push('/dashboard');
-  }
-
   const onSubmit = async (values: z.infer<typeof registerSchema>) => {
     setIsLoading(true);
     try {
@@ -88,8 +79,22 @@ export default function RegisterPage() {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      handleGoogleRegistration();
+      const result = await signInWithPopup(auth, provider);
+      const additionalInfo = getAdditionalUserInfo(result);
+      
+      if (additionalInfo?.isNewUser) {
+        sessionStorage.setItem('isNewUser', 'true');
+        toast({
+            title: "Account created",
+            description: "Welcome to ClickBag!",
+        });
+      } else {
+         toast({
+            title: "Login successful",
+            description: "Welcome back!",
+        });
+      }
+      router.push('/dashboard');
     } catch (error: any) {
       toast({
         variant: 'destructive',
