@@ -5,6 +5,7 @@ import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/hooks/use-auth';
+import PageTransition from '@/components/layout/page-transition';
 
 export const metadata: Metadata = {
   title: 'ClickBag',
@@ -30,7 +31,9 @@ export default function RootLayout({
         <AuthProvider>
           <div className="relative flex min-h-screen flex-col">
             <Header />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1">
+              <PageTransition>{children}</PageTransition>
+            </main>
             <Footer />
           </div>
           <Toaster />
@@ -38,3 +41,4 @@ export default function RootLayout({
       </body>
     </html>
   );
+}
