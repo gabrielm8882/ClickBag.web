@@ -223,7 +223,7 @@ export default function UploadForm() {
       {(userLocation || locationError) && (
         <Alert className="mb-8" variant={locationError ? "destructive" : "default"}>
           <MapPin className="h-4 w-4" />
-          <AlertTitle>{locationError ? 'Location Access' : 'Location Detected'}</AlertTitle>
+          <AlertTitle>{locationError ? 'Location Access Denied' : 'Location Detected'}</AlertTitle>
           <AlertDescription>
             {locationError 
               ? locationError
@@ -306,3 +306,5 @@ export default function UploadForm() {
     </>
   );
 }
+
+    
