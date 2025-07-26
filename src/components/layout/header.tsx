@@ -1,10 +1,11 @@
 
 "use client";
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Leaf, LogOut, User as UserIcon } from 'lucide-react';
+import { Leaf, LogOut, User as UserIcon, Menu } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
 import {
@@ -16,10 +17,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
+import { cn } from '@/lib/utils';
+
 
 export function Header() {
   const { user } = useAuth();
   const router = useRouter();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
     await auth.signOut();
@@ -32,15 +37,60 @@ export function Header() {
     return names.map((n) => n[0]).join('');
   };
 
+  const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
+    <Link href={href} passHref>
+        <SheetClose asChild>
+            <Button variant="ghost" className="justify-start w-full text-left md:w-auto md:justify-center md:text-sm md:font-medium md:text-muted-foreground md:transition-colors md:hover:text-primary md:hover:bg-transparent md:px-0">
+                {children}
+            </Button>
+        </SheetClose>
+    </Link>
+  );
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center justify-between">
-        <div className="flex items-center">
-          <Link href="/" className="flex items-center space-x-2 mr-6">
-            <Leaf className="h-6 w-6 text-accent" />
-            <span className="font-bold sm:inline-block">ClickBag</span>
-          </Link>
-          <nav className="hidden md:flex items-center space-x-6">
+      <div className="container flex h-14 items-center">
+        {/* Mobile Menu */}
+        <div className="md:hidden">
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                        <Menu className="h-6 w-6" />
+                        <span className="sr-only">Open Menu</span>
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="left">
+                    <div className="flex flex-col gap-4 py-6">
+                        <Link href="/" className="flex items-center space-x-2 mb-4" passHref>
+                           <SheetClose asChild>
+                             <>
+                                <Leaf className="h-6 w-6 text-accent" />
+                                <span className="font-bold">ClickBag</span>
+                             </>
+                           </SheetClose>
+                        </Link>
+                        {user && (
+                            <>
+                               <NavLink href="/dashboard">Dashboard</NavLink>
+                               <NavLink href="/upload">Upload</NavLink>
+                            </>
+                        )}
+                        <NavLink href="/sponsors">Sponsors</NavLink>
+                    </div>
+                </SheetContent>
+            </Sheet>
+        </div>
+        
+        {/* Desktop Logo */}
+        <div className="hidden md:flex">
+             <Link href="/" className="flex items-center space-x-2 mr-6">
+                <Leaf className="h-6 w-6 text-accent" />
+                <span className="font-bold">ClickBag</span>
+            </Link>
+        </div>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center space-x-6 flex-1">
             {user && (
               <>
                 <Link href="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
@@ -54,9 +104,12 @@ export function Header() {
             <Link href="/sponsors" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
                   Sponsors
             </Link>
-          </nav>
-        </div>
-        <div className="flex items-center">
+        </nav>
+
+        {/* User Authentication */}
+        <div className={cn("flex items-center", {
+            'flex-1 justify-end md:flex-initial': !user
+        })}>
           {user ? (
              <DropdownMenu>
               <DropdownMenuTrigger asChild>
