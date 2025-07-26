@@ -168,8 +168,8 @@ export default function Home() {
               <motion.div
                 key={index}
                 variants={FADE_UP_ANIMATION_VARIANTS}
-                whileHover={{ scale: 1.03 }}
-                transition={{ type: 'spring', stiffness: 300 }}
+                whileHover={{ scale: 1.03, y: -2 }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
               >
                 <Card className="text-center h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
                   <CardHeader>
@@ -261,7 +261,9 @@ export default function Home() {
                             <TooltipProvider>
                                <Tooltip>
                                 <TooltipTrigger>
-                                  <Lock className="h-10 w-10 text-accent rotate-[-15deg] [filter:drop-shadow(0_0_6px_hsl(var(--accent)))]"/>
+                                  <motion.div whileHover={{ scale: 1.1, rotate: -15 }} transition={{ type: 'spring', stiffness: 400, damping: 10 }}>
+                                    <Lock className="h-10 w-10 text-accent [filter:drop-shadow(0_0_6px_hsl(var(--accent)))]"/>
+                                  </motion.div>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                   <p>This will be unlocked once the community plants 100 trees.</p>
@@ -283,7 +285,9 @@ export default function Home() {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger>
-                                  <Lock className="h-10 w-10 text-accent rotate-[-15deg] [filter:drop-shadow(0_0_6px_hsl(var(--accent)))]"/>
+                                   <motion.div whileHover={{ scale: 1.1, rotate: -15 }} transition={{ type: 'spring', stiffness: 400, damping: 10 }}>
+                                    <Lock className="h-10 w-10 text-accent [filter:drop-shadow(0_0_6px_hsl(var(--accent)))]"/>
+                                  </motion.div>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                   <p>This will be unlocked once the community earns 1,000 ClickPoints.</p>

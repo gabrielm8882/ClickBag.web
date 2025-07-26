@@ -87,8 +87,8 @@ export default function SponsorsPage() {
             <motion.div
               key={index}
               variants={FADE_UP_ANIMATION_VARIANTS}
-              whileHover={{ scale: 1.03 }}
-              transition={{ type: 'spring', stiffness: 300 }}
+              whileHover={{ scale: 1.03, y: -2 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
             >
               <Card className="text-center h-full shadow-lg hover:shadow-xl transition-shadow duration-300 border-none bg-background">
                 <CardHeader>
