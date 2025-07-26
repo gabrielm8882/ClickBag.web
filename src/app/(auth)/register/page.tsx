@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,7 +51,7 @@ export default function RegisterPage() {
     },
   });
 
-  const handleSuccessfulRegistration = () => {
+  const handleGoogleRegistration = () => {
     sessionStorage.setItem('isNewUser', 'true');
     toast({
       title: "Account created",
@@ -65,7 +65,14 @@ export default function RegisterPage() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       await updateProfile(userCredential.user, { displayName: values.name });
-      handleSuccessfulRegistration();
+      await sendEmailVerification(userCredential.user);
+      
+      toast({
+        title: "Verification email sent",
+        description: "Please check your inbox to verify your account.",
+      });
+
+      router.push('/verify-email');
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -82,7 +89,7 @@ export default function RegisterPage() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      handleSuccessfulRegistration();
+      handleGoogleRegistration();
     } catch (error: any) {
       toast({
         variant: 'destructive',

@@ -52,7 +52,16 @@ export default function LoginPage() {
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      if (!userCredential.user.emailVerified) {
+        toast({
+          variant: 'destructive',
+          title: 'Email not verified',
+          description: 'Please check your inbox and verify your email address to log in.',
+        });
+        await auth.signOut(); // Ensure user is logged out
+        return;
+      }
       toast({
         title: "Login successful",
         description: "Welcome back!",
