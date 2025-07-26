@@ -184,17 +184,19 @@ export default function DashboardPage() {
       </AlertDialog>
 
       <div className="container mx-auto py-8 px-4 md:px-6">
-        {userData.totalPoints > 0 && (
-          <div className="flex items-center justify-center gap-2 mb-4 text-accent">
-            <Crown className="h-6 w-6" />
-            <h2 className="font-headline text-xl font-semibold">
-              ClickBag Contributor
-            </h2>
-          </div>
-        )}
-        <h1 className="font-headline text-3xl md:text-4xl font-bold mb-8 text-center md:text-left">
-          Your impact dashboard
-        </h1>
+        <div className="flex items-center justify-center md:justify-start gap-4 mb-8 text-center md:text-left flex-wrap">
+          <h1 className="font-headline text-3xl md:text-4xl font-bold">
+            Your impact dashboard
+          </h1>
+          {userData.totalPoints > 0 && (
+            <div className="flex items-center gap-2 text-accent bg-accent/10 px-3 py-1 rounded-full">
+              <Crown className="h-5 w-5" />
+              <h2 className="font-headline text-lg font-semibold">
+                ClickBag Contributor
+              </h2>
+            </div>
+          )}
+        </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
           <Card>
@@ -282,5 +284,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-    

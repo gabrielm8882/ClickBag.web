@@ -122,15 +122,17 @@ export function Header() {
           {user ? (
               <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full ring-2 ring-offset-background ring-offset-2 ring-accent">
-                  {userData && userData.totalPoints > 0 && (
-                      <Crown className="absolute -top-2 -right-2 h-4 w-4 text-accent rotate-12" />
-                  )}
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
-                    <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                  </Avatar>
-                </Button>
+                <div className="flex items-center gap-2">
+                   {userData && userData.totalPoints > 0 && (
+                      <Crown className="h-5 w-5 text-accent" />
+                   )}
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full ring-2 ring-offset-background ring-offset-2 ring-accent">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
+                      <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
