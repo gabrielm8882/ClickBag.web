@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
@@ -46,6 +46,40 @@ interface Submission {
 }
 
 const DAILY_GOAL = 3; // 3 trees per day
+
+function AnimatedCounter({ endValue }: { endValue: number }) {
+  const [count, setCount] = useState(0);
+  const prevEndValueRef = useRef(0);
+
+  useEffect(() => {
+    const startValue = prevEndValueRef.current;
+    let startTime: number;
+    const duration = 1500; // ms
+
+    const step = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = timestamp - startTime;
+      const current = Math.min(startValue + (progress / duration) * (endValue - startValue), endValue);
+      setCount(Math.floor(current));
+
+      if (progress < duration) {
+        requestAnimationFrame(step);
+      } else {
+        setCount(endValue);
+        prevEndValueRef.current = endValue;
+      }
+    };
+
+    requestAnimationFrame(step);
+
+    return () => {
+      prevEndValueRef.current = endValue;
+    }
+  }, [endValue]);
+
+  return <>{count.toLocaleString()}</>;
+}
+
 
 export default function DashboardPage() {
   const { user, userData, loading } = useAuth();
@@ -169,7 +203,9 @@ export default function DashboardPage() {
               <Coins className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{userData.totalPoints.toLocaleString()}</div>
+              <div className="text-2xl font-bold">
+                <AnimatedCounter endValue={userData.totalPoints} />
+              </div>
               <p className="text-xs text-muted-foreground">
                 Your lifetime contribution
               </p>
@@ -181,7 +217,9 @@ export default function DashboardPage() {
               <Leaf className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{userData.totalTrees}</div>
+              <div className="text-2xl font-bold">
+                <AnimatedCounter endValue={userData.totalTrees} />
+              </div>
               <p className="text-xs text-muted-foreground">
                 Thanks to your points!
               </p>
@@ -244,3 +282,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    
