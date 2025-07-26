@@ -256,8 +256,8 @@ export default function Home() {
                     <Card className="p-8 shadow-lg">
                         <Leaf className="h-12 w-12 text-accent mx-auto mb-4" />
                         <h3 className="font-headline text-2xl font-semibold mb-2">Trees planted</h3>
-                        <div className="relative">
-                          <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500 z-10", isTreesLocked ? 'opacity-100' : 'opacity-0 pointer-events-none')}>
+                        <div className="relative h-[72px] flex items-center justify-center">
+                          {isTreesLocked ? (
                             <TooltipProvider>
                                <Tooltip>
                                 <TooltipTrigger>
@@ -268,8 +268,9 @@ export default function Home() {
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
-                          </div>
-                          <AnimatedCounter end={communityStats.totalTreesPlanted} className={cn("font-headline text-5xl md:text-7xl font-bold text-primary transition-all duration-500", isTreesLocked ? 'opacity-20' : 'opacity-100')} />
+                          ) : (
+                             <AnimatedCounter end={communityStats.totalTreesPlanted} className="font-headline text-5xl md:text-7xl font-bold text-primary" />
+                          )}
                         </div>
                     </Card>
                 </motion.div>
@@ -277,8 +278,8 @@ export default function Home() {
                     <Card className="p-8 shadow-lg">
                         <Coins className="h-12 w-12 text-accent mx-auto mb-4" />
                         <h3 className="font-headline text-2xl font-semibold mb-2">Total ClickPoints earned</h3>
-                        <div className="relative">
-                           <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500 z-10", isPointsLocked ? 'opacity-100' : 'opacity-0 pointer-events-none')}>
+                        <div className="relative h-[72px] flex items-center justify-center">
+                           {isPointsLocked ? (
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger>
@@ -289,8 +290,9 @@ export default function Home() {
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
-                          </div>
-                          <AnimatedCounter end={communityStats.totalClickPoints} className={cn("font-headline text-5xl md:text-7xl font-bold text-primary transition-all duration-500", isPointsLocked ? 'opacity-20' : 'opacity-100')} />
+                          ) : (
+                             <AnimatedCounter end={communityStats.totalClickPoints} className="font-headline text-5xl md:text-7xl font-bold text-primary" />
+                          )}
                         </div>
                     </Card>
                 </motion.div>
