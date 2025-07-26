@@ -3,7 +3,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Leaf, ScanLine, Coins, ArrowRight, Info, User, Zap, Package, Handshake, Lock, ShoppingBag } from 'lucide-react';
+import { Leaf, ScanLine, Coins, ArrowRight, Info, User, Zap, Package, Handshake, Lock } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -39,35 +39,6 @@ interface CommunityStats {
     totalClickPoints: number;
 }
 
-const BagToTreeAnimation = () => {
-    const ref = useRef(null);
-    const isInView = useInView(ref, { once: true, amount: 0.5 });
-  
-    const variants = {
-      hidden: { opacity: 0, scale: 0.5, rotate: -90 },
-      visible: { opacity: 1, scale: 1, rotate: 0, transition: { duration: 0.7, ease: 'easeOut' } },
-    };
-  
-    return (
-      <div ref={ref} className="relative w-full h-[300px] flex items-center justify-center bg-secondary rounded-lg shadow-lg overflow-hidden">
-        <motion.div
-          animate={{ opacity: isInView ? 0 : 1, scale: isInView ? 0.2 : 1, rotate: isInView ? 180 : 0 }}
-          transition={{ duration: 0.8, ease: 'easeInOut' }}
-          className="absolute"
-        >
-          <ShoppingBag className="h-24 w-24 md:h-28 md:w-28 text-primary" />
-        </motion.div>
-        <motion.div
-          initial="hidden"
-          animate={isInView ? 'visible' : 'hidden'}
-          variants={variants}
-          className="absolute"
-        >
-          <Leaf className="h-28 w-28 md:h-32 md:w-32 text-accent" />
-        </motion.div>
-      </div>
-    );
-  };
 
 export default function Home() {
   const { user } = useAuth();
@@ -220,17 +191,10 @@ export default function Home() {
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, amount: 0.3 }}
-            variants={{
-                hidden: {},
-                show: {
-                    transition: {
-                        staggerChildren: 0.2,
-                    },
-                },
-            }}
-            className="container mx-auto grid md:grid-cols-2 gap-12 px-4 md:px-6 items-center"
+            variants={FADE_UP_ANIMATION_VARIANTS}
+            className="container mx-auto px-4 md:px-6"
         >
-          <motion.div variants={FADE_UP_ANIMATION_VARIANTS}>
+          <div>
             <h2 className="font-headline text-3xl md:text-4xl font-bold">Our mission & our sponsors</h2>
             <p className="text-muted-foreground mt-4">
               At ClickBag, we believe that small actions can lead to massive change. Our mission is to transform
@@ -256,10 +220,7 @@ export default function Home() {
                     <p className="text-muted-foreground">This project was built by a 16-year-old from Spain with a passion for our planet.</p>
                 </div>
             </div>
-          </motion.div>
-          <motion.div variants={FADE_UP_ANIMATION_VARIANTS}>
-             <BagToTreeAnimation />
-          </motion.div>
+          </div>
         </motion.div>
       </section>
       
