@@ -226,20 +226,27 @@ export default function Home() {
         <div className="container mx-auto px-4 md:px-6 text-center">
           <Handshake className="h-12 w-12 text-accent mx-auto mb-4" />
           <h2 className="font-headline text-3xl md:text-4xl font-bold">Are You a Sponsor?</h2>
-          <p className="text-muted-foreground md:text-lg mt-2 mb-8">
-            Help us grow our impact. If you're interested in sponsoring ClickBags, please contact us.
+          <p className="text-muted-foreground md:text-lg mt-2 mb-8 max-w-2xl mx-auto">
+            Help us grow our impact. Sponsoring ClickBags is an investment in nature and a unique way to advertise your brand on a sustainable product.
           </p>
-          <p className="text-lg font-semibold">
-            DM us on Instagram:{' '}
-            <a
-              href="https://www.instagram.com/click_bag_"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent hover:underline"
-            >
-              @click_bag_
-            </a>
-          </p>
+          <div className="flex flex-col items-center gap-4">
+             <Link href="/sponsors">
+                <Button size="lg" className="shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow">
+                    What's in for you?
+                </Button>
+            </Link>
+            <p className="text-lg font-semibold">
+              Or, DM us on Instagram:{' '}
+              <a
+                href="https://www.instagram.com/click_bag_"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent hover:underline"
+              >
+                @click_bag_
+              </a>
+            </p>
+          </div>
         </div>
       </section>
     </div>

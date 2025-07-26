@@ -52,6 +52,9 @@ export function Header() {
               </Link>
             </>
           )}
+           <Link href="/sponsors" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                Sponsors
+            </Link>
         </nav>
         <div className="flex items-center justify-end space-x-4">
           {user ? (
