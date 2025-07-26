@@ -1,3 +1,4 @@
+
 'use server';
 
 import { validateReceiptImage, type ValidateReceiptImageInput, type ValidateReceiptImageOutput } from '@/ai/flows/validate-receipt-image';

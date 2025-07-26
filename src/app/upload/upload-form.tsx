@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -21,6 +22,11 @@ import { handleImageUpload } from '@/lib/actions';
 import type { ValidateReceiptImageOutput } from '@/ai/flows/validate-receipt-image';
 import { useToast } from '@/hooks/use-toast';
 
+interface UserLocation {
+  latitude: number;
+  longitude: number;
+}
+
 export default function UploadForm() {
   const [purchasePhoto, setPurchasePhoto] = useState<File | null>(null);
   const [receiptPhoto, setReceiptPhoto] = useState<File | null>(null);
@@ -31,9 +37,42 @@ export default function UploadForm() {
   const [result, setResult] = useState<ValidateReceiptImageOutput | null>(null);
   const [isTimeDialogOpen, setIsTimeDialogOpen] = useState(false);
   const [spainTime, setSpainTime] = useState('');
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
+    // Request user's location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+          setLocationError(null);
+        },
+        (error) => {
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              setLocationError("You denied the request for Geolocation. This is optional but helps with validation.");
+              break;
+            case error.POSITION_UNAVAILABLE:
+              setLocationError("Location information is unavailable.");
+              break;
+            case error.TIMEOUT:
+              setLocationError("The request to get user location timed out.");
+              break;
+            default:
+              setLocationError("An unknown error occurred while getting your location.");
+              break;
+          }
+        }
+      );
+    } else {
+      setLocationError("Geolocation is not supported by this browser.");
+    }
+    
     const getSpainTime = () => {
       const now = new Date();
       try {
@@ -91,6 +130,8 @@ export default function UploadForm() {
       const aiResult = await handleImageUpload({
         purchasePhotoDataUri,
         receiptPhotoDataUri,
+        userLatitude: userLocation?.latitude,
+        userLongitude: userLocation?.longitude,
       });
 
       if (aiResult.error) {
@@ -178,6 +219,20 @@ export default function UploadForm() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+       
+      {(userLocation || locationError) && (
+        <Alert className="mb-8" variant={locationError ? "destructive" : "default"}>
+          <MapPin className="h-4 w-4" />
+          <AlertTitle>{locationError ? 'Location Access' : 'Location Detected'}</AlertTitle>
+          <AlertDescription>
+            {locationError 
+              ? locationError
+              : `Your approximate location is being used to help with validation. (Lat: ${userLocation?.latitude.toFixed(4)}, Lon: ${userLocation?.longitude.toFixed(4)})`
+            }
+          </AlertDescription>
+        </Alert>
+      )}
+
 
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

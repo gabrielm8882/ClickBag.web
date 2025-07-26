@@ -24,6 +24,8 @@ const ValidateReceiptImageInputSchema = z.object({
     .describe(
       "A photo of the receipt, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
+  userLatitude: z.number().optional().describe("The user's current latitude."),
+  userLongitude: z.number().optional().describe("The user's current longitude."),
 });
 export type ValidateReceiptImageInput = z.infer<typeof ValidateReceiptImageInputSchema>;
 
@@ -50,6 +52,9 @@ const validateReceiptImagePrompt = ai.definePrompt({
   output: {schema: ValidateReceiptImageOutputSchema},
   prompt: `You are an AI assistant that validates user-submitted photos for a sustainability rewards program.
 The current server date and time is {{currentDateTime}} (in ISO 8601 format). You MUST use this as the absolute reference for "now". Be aware that the user may be in a different timezone.
+{{#if userLatitude}}
+The user's current location is approximately Latitude: {{userLatitude}}, Longitude: {{userLongitude}}. Use this as a clue to verify if they are near the purchase location on the receipt.
+{{/if}}
 
 You must perform the following checks with extreme scrutiny:
 1.  **Purchase Photo Analysis**: Analyze the first photo. It MUST show a series of products inside a physical shopping bag.
@@ -60,6 +65,7 @@ You must perform the following checks with extreme scrutiny:
     b. The receipt must be for a purchase made on the same calendar day relative to the current server time ({{currentDateTime}}).
     c. Check if the time on the receipt is approximately correct for the inferred timezone. A receipt dated today is valid even if its time appears to be in the "future" from the server's perspective, as it could be from a different timezone.
 5.  **Duplicate Check**: Be extra vigilant for submissions that look very similar to each other. Submissions are checked against a database of photos from the last 15 days. If you suspect this is a duplicate, reject it.
+6.  **Location Cross-Reference (if available)**: If the user's coordinates are provided, compare them to the store location on the receipt. They should be plausibly close.
 
 If all checks pass:
 - Set 'isValid' to true.
