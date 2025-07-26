@@ -13,6 +13,7 @@ import { db } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 function AnimatedCounter({ end, duration = 2000, className }: { end: number; duration?: number, className?: string }) {
   const [count, setCount] = useState(0);
@@ -256,11 +257,19 @@ export default function Home() {
                         <Leaf className="h-12 w-12 text-accent mx-auto mb-4" />
                         <h3 className="font-headline text-2xl font-semibold mb-2">Trees planted</h3>
                         <div className="relative">
-                          <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500", isTreesLocked ? 'opacity-100' : 'opacity-0')}>
-                            <div className="absolute inset-0 bg-white/30 dark:bg-black/30 backdrop-blur-md"></div>
-                            <Lock className="h-10 w-10 text-accent z-10 rotate-[-15deg] [filter:drop-shadow(0_0_6px_hsl(var(--accent)))]"/>
+                          <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500 z-10", isTreesLocked ? 'opacity-100' : 'opacity-0 pointer-events-none')}>
+                            <TooltipProvider>
+                               <Tooltip>
+                                <TooltipTrigger>
+                                  <Lock className="h-10 w-10 text-accent rotate-[-15deg] [filter:drop-shadow(0_0_6px_hsl(var(--accent)))]"/>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>This will be unlocked once the community plants 100 trees.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </div>
-                          <AnimatedCounter end={communityStats.totalTreesPlanted} className={cn("font-headline text-5xl md:text-7xl font-bold text-primary transition-all duration-500", isTreesLocked ? 'blur-xl' : 'blur-none')} />
+                          <AnimatedCounter end={communityStats.totalTreesPlanted} className={cn("font-headline text-5xl md:text-7xl font-bold text-primary transition-all duration-500", isTreesLocked ? 'opacity-20' : 'opacity-100')} />
                         </div>
                     </Card>
                 </motion.div>
@@ -269,11 +278,19 @@ export default function Home() {
                         <Coins className="h-12 w-12 text-accent mx-auto mb-4" />
                         <h3 className="font-headline text-2xl font-semibold mb-2">Total ClickPoints earned</h3>
                         <div className="relative">
-                           <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500", isPointsLocked ? 'opacity-100' : 'opacity-0')}>
-                            <div className="absolute inset-0 bg-white/30 dark:bg-black/30 backdrop-blur-md"></div>
-                            <Lock className="h-10 w-10 text-accent z-10 rotate-[-15deg] [filter:drop-shadow(0_0_6px_hsl(var(--accent)))]"/>
+                           <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500 z-10", isPointsLocked ? 'opacity-100' : 'opacity-0 pointer-events-none')}>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Lock className="h-10 w-10 text-accent rotate-[-15deg] [filter:drop-shadow(0_0_6px_hsl(var(--accent)))]"/>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>This will be unlocked once the community earns 1,000 ClickPoints.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </div>
-                          <AnimatedCounter end={communityStats.totalClickPoints} className={cn("font-headline text-5xl md:text-7xl font-bold text-primary transition-all duration-500", isPointsLocked ? 'blur-xl' : 'blur-none')} />
+                          <AnimatedCounter end={communityStats.totalClickPoints} className={cn("font-headline text-5xl md:text-7xl font-bold text-primary transition-all duration-500", isPointsLocked ? 'opacity-20' : 'opacity-100')} />
                         </div>
                     </Card>
                 </motion.div>
