@@ -83,30 +83,51 @@ function AnimatedCounter({ endValue }: { endValue: number }) {
 
 
 export default function DashboardPage() {
-  const { user, userData, loading } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [dailyTrees, setDailyTrees] = useState(0);
-  const [pageLoading, setPageLoading] = useState(true);
+  
+  // --- START OF SIMULATION DATA ---
+  const isSimulation = true; // Set to true to enable simulation
+
+  const [submissions, setSubmissions] = useState<Submission[]>([
+    { id: 'sim1', date: Timestamp.now(), geolocation: 'Test Location, World', points: 10, status: 'Approved' }
+  ]);
+  const [dailyTrees, setDailyTrees] = useState(1);
+  const [pageLoading, setPageLoading] = useState(false);
   const [progressValue, setProgressValue] = useState(0);
   const [showPrivacyNotice, setShowPrivacyNotice] = useState(false);
+  
+  const simulatedUserData: UserData = {
+      totalPoints: 10,
+      totalTrees: 1,
+  };
+  const userData = isSimulation ? simulatedUserData : useAuth().userData;
+  // --- END OF SIMULATION DATA ---
+
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!isSimulation && !loading && !user) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, isSimulation]);
   
   useEffect(() => {
+    if (isSimulation) return; // Don't run if simulating
     const isNewUser = sessionStorage.getItem('isNewUser');
     if (isNewUser) {
       setShowPrivacyNotice(true);
       sessionStorage.removeItem('isNewUser');
     }
-  }, []);
+  }, [isSimulation]);
 
   useEffect(() => {
+    if (isSimulation) {
+      setPageLoading(false);
+      return;
+    }; // Don't run if simulating
+
     if (user) {
+      setPageLoading(true);
       const today = new Date();
       const startOfToday = startOfDay(today);
       const endOfToday = endOfDay(today);
@@ -140,7 +161,7 @@ export default function DashboardPage() {
         unsubscribeSubmissions();
       };
     }
-  }, [user]);
+  }, [user, isSimulation]);
 
   useEffect(() => {
     const newProgress = Math.min((dailyTrees / DAILY_GOAL) * 100, 100);
@@ -152,7 +173,7 @@ export default function DashboardPage() {
     setShowPrivacyNotice(false);
   };
 
-  if (loading || pageLoading || !user || !userData) {
+  if ((loading || pageLoading || !user || !userData) && !isSimulation) {
     return (
       <div className="flex flex-col justify-center items-center h-screen">
         <LeafLoader />
@@ -189,15 +210,13 @@ export default function DashboardPage() {
           <h1 className="font-headline text-3xl md:text-4xl font-bold">
             Your impact dashboard
           </h1>
-          {userData.totalPoints > 0 && (
+          {userData && userData.totalPoints > 0 && (
              <motion.div
                 className="flex items-center gap-2 text-accent bg-accent/10 px-3 py-1 rounded-full cursor-pointer"
-                whileHover={{ scale: 1.03 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                whileHover={{ scale: 1.03, transition: { duration: 0.2, ease: 'easeInOut' } }}
               >
                 <motion.div
-                  whileHover={{ rotate: -8, scale: 1.2, filter: 'drop-shadow(0 0 6px hsl(var(--accent) / 0.7))' }}
-                  transition={{ duration: 0.2, ease: 'easeInOut' }}
+                  whileHover={{ rotate: -8, scale: 1.2, filter: 'drop-shadow(0 0 6px hsl(var(--accent) / 0.7))', transition: { duration: 0.1, ease: 'easeInOut' } }}
                 >
                   <Crown className="h-5 w-5" />
                 </motion.div>
@@ -216,7 +235,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                <AnimatedCounter endValue={userData.totalPoints} />
+                <AnimatedCounter endValue={userData?.totalPoints || 0} />
               </div>
               <p className="text-xs text-muted-foreground">
                 Your lifetime contribution
@@ -230,7 +249,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                <AnimatedCounter endValue={userData.totalTrees} />
+                <AnimatedCounter endValue={userData?.totalTrees || 0} />
               </div>
               <p className="text-xs text-muted-foreground">
                 Thanks to your points!
