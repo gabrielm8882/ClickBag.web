@@ -161,7 +161,7 @@ export default function UploadForm() {
                   </AlertTitle>
                   <AlertDescription>
                     {locationStatus === 'loading' && 'We are accessing your location for validation. Please wait.'}
-                    {locationStatus === 'success' && 'Location access is required for validation purposes.'}
+                    {locationStatus === 'success' && 'For best results, please submit your photo while you are still at or near the store.'}
                     {locationStatus === 'error' && locationError}
                   </AlertDescription>
                 </Alert>
