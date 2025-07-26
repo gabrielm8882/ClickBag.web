@@ -50,8 +50,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
-        {/* Mobile Menu */}
-        <div className="md:hidden">
+        <div className="flex items-center md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
                     <Button variant="ghost" size="icon">
@@ -59,95 +58,94 @@ export function Header() {
                         <span className="sr-only">Open Menu</span>
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="left">
+                <SheetContent side="left" className="pr-0">
                     <div className="flex flex-col gap-4 py-6">
                         <Link href="/" className="flex items-center space-x-2 mb-4" passHref>
                            <SheetClose asChild>
-                             <>
+                             <div className="flex items-center space-x-2">
                                 <Leaf className="h-6 w-6 text-accent" />
                                 <span className="font-bold">ClickBag</span>
-                             </>
+                             </div>
                            </SheetClose>
                         </Link>
-                        {user && (
-                            <>
-                               <NavLink href="/dashboard">Dashboard</NavLink>
-                               <NavLink href="/upload">Upload</NavLink>
-                            </>
-                        )}
-                        <NavLink href="/sponsors">Sponsors</NavLink>
+                        
+                        <div className="flex flex-col gap-2 pr-6">
+                            {user && (
+                                <>
+                                   <NavLink href="/dashboard">Dashboard</NavLink>
+                                   <NavLink href="/upload">Upload</NavLink>
+                                </>
+                            )}
+                            <NavLink href="/sponsors">Sponsors</NavLink>
+                        </div>
                     </div>
                 </SheetContent>
             </Sheet>
         </div>
         
-        {/* Desktop Logo */}
-        <div className="hidden md:flex">
+        <div className="hidden md:flex flex-1 items-center justify-between">
              <Link href="/" className="flex items-center space-x-2 mr-6">
                 <Leaf className="h-6 w-6 text-accent" />
                 <span className="font-bold">ClickBag</span>
             </Link>
+
+            <nav className="hidden md:flex items-center space-x-6">
+                {user && (
+                  <>
+                    <Link href="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                      Dashboard
+                    </Link>
+                    <Link href="/upload" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                      Upload
+                    </Link>
+                  </>
+                )}
+                <Link href="/sponsors" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                      Sponsors
+                </Link>
+            </nav>
+
+            <div className="flex items-center">
+              {user ? (
+                 <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
+                        <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <Link href="/dashboard" passHref>
+                      <DropdownMenuItem>
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        <span>Dashboard</span>
+                      </DropdownMenuItem>
+                    </Link>
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link href="/login">
+                  <Button variant="ghost">Login</Button>
+                </Link>
+              )}
+            </div>
         </div>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6 flex-1">
-            {user && (
-              <>
-                <Link href="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                  Dashboard
-                </Link>
-                <Link href="/upload" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                  Upload
-                </Link>
-              </>
-            )}
-            <Link href="/sponsors" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                  Sponsors
-            </Link>
-        </nav>
-
-        {/* User Authentication */}
-        <div className={cn("flex items-center", {
-            'flex-1 justify-end md:flex-initial': !user
-        })}>
-          {user ? (
-             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
-                    <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.displayName}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user.email}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <Link href="/dashboard" passHref>
-                  <DropdownMenuItem>
-                    <UserIcon className="mr-2 h-4 w-4" />
-                    <span>Dashboard</span>
-                  </DropdownMenuItem>
-                </Link>
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Link href="/login">
-              <Button variant="ghost">Login</Button>
-            </Link>
-          )}
-        </div>
       </div>
     </header>
   );
