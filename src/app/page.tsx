@@ -169,28 +169,26 @@ export default function Home() {
       </section>
       
       {/* Aggregate Progress Display */}
-      {user && (
-        <section className="w-full py-16 md:py-24 bg-secondary">
-          <div className="container mx-auto px-4 md:px-6 text-center">
-              <h2 className="font-headline text-3xl md:text-4xl font-bold">Our Collective Impact</h2>
-              <p className="text-muted-foreground md:text-lg mt-2 mb-8">
-                See what our community has achieved together.
-              </p>
-              <div className="grid gap-8 md:grid-cols-2">
-                  <Card className="p-8 shadow-lg">
-                      <Leaf className="h-12 w-12 text-accent mx-auto mb-4" />
-                      <h3 className="font-headline text-2xl font-semibold mb-2">Trees Planted</h3>
-                      <AnimatedCounter end={communityStats.totalTreesPlanted} className="font-headline text-5xl md:text-7xl font-bold text-primary" />
-                  </Card>
-                  <Card className="p-8 shadow-lg">
-                      <Coins className="h-12 w-12 text-accent mx-auto mb-4" />
-                      <h3 className="font-headline text-2xl font-semibold mb-2">Total ClickPoints Earned</h3>
-                      <AnimatedCounter end={communityStats.totalClickPoints} className="font-headline text-5xl md:text-7xl font-bold text-primary" />
-                  </Card>
-              </div>
-          </div>
-        </section>
-      )}
+      <section className="w-full py-16 md:py-24 bg-secondary">
+        <div className="container mx-auto px-4 md:px-6 text-center">
+            <h2 className="font-headline text-3xl md:text-4xl font-bold">Our Collective Impact</h2>
+            <p className="text-muted-foreground md:text-lg mt-2 mb-8">
+              See what our community has achieved together.
+            </p>
+            <div className="grid gap-8 md:grid-cols-2">
+                <Card className="p-8 shadow-lg">
+                    <Leaf className="h-12 w-12 text-accent mx-auto mb-4" />
+                    <h3 className="font-headline text-2xl font-semibold mb-2">Trees Planted</h3>
+                    <AnimatedCounter end={communityStats.totalTreesPlanted} className="font-headline text-5xl md:text-7xl font-bold text-primary" />
+                </Card>
+                <Card className="p-8 shadow-lg">
+                    <Coins className="h-12 w-12 text-accent mx-auto mb-4" />
+                    <h3 className="font-headline text-2xl font-semibold mb-2">Total ClickPoints Earned</h3>
+                    <AnimatedCounter end={communityStats.totalClickPoints} className="font-headline text-5xl md:text-7xl font-bold text-primary" />
+                </Card>
+            </div>
+        </div>
+      </section>
 
       {/* Join Project Section */}
       <section className="w-full py-16">
