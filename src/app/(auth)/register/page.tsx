@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -53,7 +54,7 @@ export default function RegisterPage() {
   const handleSuccessfulRegistration = () => {
     sessionStorage.setItem('isNewUser', 'true');
     toast({
-      title: "Account Created",
+      title: "Account created",
       description: "Welcome to ClickBag!",
     });
     router.push('/dashboard');
@@ -68,7 +69,7 @@ export default function RegisterPage() {
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Registration Failed',
+        title: 'Registration failed',
         description: error.message,
       });
     } finally {
@@ -85,7 +86,7 @@ export default function RegisterPage() {
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Google Sign-Up Failed',
+        title: 'Google sign-up failed',
         description: error.message,
       });
     } finally {
@@ -146,7 +147,7 @@ export default function RegisterPage() {
           </CardContent>
           <CardFooter className="flex-col gap-4">
             <Button type="submit" className="w-full shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow" disabled={isLoading || isGoogleLoading}>
-              {isLoading ? <Loader2 className="animate-spin" /> : 'Create Account'}
+              {isLoading ? <Loader2 className="animate-spin" /> : 'Create account'}
             </Button>
              <Button variant="outline" type="button" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
               {isGoogleLoading ? <Loader2 className="animate-spin" /> : 'Sign up with Google'}

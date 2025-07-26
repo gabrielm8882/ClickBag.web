@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -53,14 +54,14 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({
-        title: "Login Successful",
+        title: "Login successful",
         description: "Welcome back!",
       });
       router.push('/dashboard');
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Login Failed',
+        title: 'Login failed',
         description: error.message,
       });
     } finally {
@@ -74,14 +75,14 @@ export default function LoginPage() {
     try {
       await signInWithPopup(auth, provider);
       toast({
-        title: "Login Successful",
+        title: "Login successful",
         description: "Welcome!",
       });
       router.push('/dashboard');
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Google Sign-In Failed',
+        title: 'Google sign-in failed',
         description: error.message,
       });
     } finally {

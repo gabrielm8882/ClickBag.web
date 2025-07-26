@@ -11,22 +11,22 @@ export default function SponsorsPage() {
   const benefits = [
     {
       icon: <Leaf className="h-10 w-10 text-accent" />,
-      title: 'Invest in Nature',
+      title: 'Invest in nature',
       description: 'Align your brand with a powerful environmental mission. Every bag sponsored contributes directly to reforestation projects, showcasing your commitment to a greener planet.',
     },
     {
       icon: <Recycle className="h-10 w-10 text-accent" />,
-      title: 'Sustainable Advertising',
+      title: 'Sustainable advertising',
       description: 'Feature your brand on our reusable, recycled ClickBags. This replaces single-use bags and puts your logo on a product that consumers can feel good about using.',
     },
     {
       icon: <Move3d className="h-10 w-10 text-accent" />,
-      title: 'A Moving Billboard',
+      title: 'A moving billboard',
       description: 'Our ClickBags travel everywhere with their users, from grocery stores to daily errands, turning every shopping trip into an advertising opportunity for your brand.',
     },
     {
       icon: <BadgeDollarSign className="h-10 w-10 text-accent" />,
-      title: 'Pay-for-Performance Impact',
+      title: 'Pay-for-performance impact',
       description: 'Beyond sponsoring the bag itself, you fund a new tree every time a user validates a purchase with your branded bag. It\'s a direct, measurable return on your environmental investment.',
     },
   ];
@@ -111,7 +111,7 @@ export default function SponsorsPage() {
           variants={FADE_UP_ANIMATION_VARIANTS}
           className="mt-20 text-center"
         >
-            <h2 className="font-headline text-3xl md:text-4xl font-bold">Ready to Become a Sponsor?</h2>
+            <h2 className="font-headline text-3xl md:text-4xl font-bold">Ready to become a sponsor?</h2>
              <p className="text-muted-foreground md:text-lg mt-2 mb-8 max-w-2xl mx-auto">
                 Join us in our mission to turn everyday actions into a powerful force for good.
              </p>

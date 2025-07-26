@@ -145,7 +145,7 @@ export default function UploadForm() {
       setError(errorMessage);
       toast({
         variant: 'destructive',
-        title: 'Validation Failed',
+        title: 'Validation failed',
         description: errorMessage,
       });
     } finally {
@@ -207,7 +207,7 @@ export default function UploadForm() {
               <Clock className="h-16 w-16 text-accent"/>
             </div>
             <AlertDialogTitle className="text-center font-headline text-2xl">
-              Current Time in Spain
+              Current time in Spain
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center text-lg font-mono pt-2">
               {spainTime}
@@ -228,7 +228,7 @@ export default function UploadForm() {
           <MapPin className={cn("h-4 w-4", {
               "text-orange-500 dark:text-orange-400": !locationError
           })} />
-          <AlertTitle>{locationError ? 'Location Access Denied' : 'Location Detected'}</AlertTitle>
+          <AlertTitle>{locationError ? 'Location access denied' : 'Location detected'}</AlertTitle>
           <AlertDescription>
             {locationError 
               ? locationError
@@ -241,8 +241,8 @@ export default function UploadForm() {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {renderFileUploader('purchase-photo', 'Photo of Your Purchase', purchasePhoto, purchasePreview, (e) => handleFileChange(e, setPurchasePhoto, setPurchasePreview), () => { setPurchasePhoto(null); setPurchasePreview(null); }, 'product photo')}
-          {renderFileUploader('receipt-photo', 'Photo of Your Receipt', receiptPhoto, receiptPreview, (e) => handleFileChange(e, setReceiptPhoto, setReceiptPreview), () => { setReceiptPhoto(null); setReceiptPreview(null); }, 'receipt photo')}
+          {renderFileUploader('purchase-photo', 'Photo of your purchase', purchasePhoto, purchasePreview, (e) => handleFileChange(e, setPurchasePhoto, setPurchasePreview), () => { setPurchasePhoto(null); setPurchasePreview(null); }, 'product photo')}
+          {renderFileUploader('receipt-photo', 'Photo of your receipt', receiptPhoto, receiptPreview, (e) => handleFileChange(e, setReceiptPhoto, setReceiptPreview), () => { setReceiptPhoto(null); setReceiptPreview(null); }, 'receipt photo')}
         </div>
 
         {error && (
@@ -260,7 +260,7 @@ export default function UploadForm() {
               Validating...
             </>
           ) : (
-            'Submit for Validation'
+            'Submit for validation'
           )}
         </Button>
       </form>
@@ -277,7 +277,7 @@ export default function UploadForm() {
                   )}
               </div>
               <AlertDialogTitle className="text-center font-headline text-2xl">
-                {result.isValid ? 'Validation Successful!' : 'Validation Failed'}
+                {result.isValid ? 'Validation successful!' : 'Validation failed'}
               </AlertDialogTitle>
               <AlertDialogDescription className="text-center">
                 {result.isValid
@@ -287,12 +287,12 @@ export default function UploadForm() {
             </AlertDialogHeader>
             <div className="my-4 space-y-4">
               <div>
-                <p className="font-semibold text-sm">AI Analysis:</p>
+                <p className="font-semibold text-sm">AI analysis:</p>
                 <p className="text-sm text-muted-foreground p-3 bg-secondary rounded-md mt-1">{result.validationDetails}</p>
               </div>
               {result.geolocation && (
                  <div>
-                    <p className="font-semibold text-sm">Purchase Location:</p>
+                    <p className="font-semibold text-sm">Purchase location:</p>
                     <div className="text-sm text-muted-foreground p-3 bg-secondary rounded-md mt-1 flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-accent"/>
                       <span>{result.geolocation}</span>

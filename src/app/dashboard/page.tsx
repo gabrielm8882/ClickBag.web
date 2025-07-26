@@ -153,7 +153,7 @@ export default function DashboardPage() {
               <ShieldCheck className="h-16 w-16 text-orange-500"/>
             </div>
             <AlertDialogTitle className="text-center font-headline text-2xl">
-              Privacy and Data Information
+              Privacy and data information
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center pt-2">
               Welcome to ClickBag! Please note that photos you upload are temporarily stored for validation and project-related purposes. We are committed to your privacy and only gather data you explicitly provide and agree to.
@@ -161,7 +161,7 @@ export default function DashboardPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction onClick={handleClosePrivacyNotice} className="w-full bg-orange-500 hover:bg-orange-600 text-white">
-              I Understand
+              I understand
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -169,7 +169,7 @@ export default function DashboardPage() {
 
       <div className="container mx-auto py-8 px-4 md:px-6">
         <h1 className="font-headline text-3xl md:text-4xl font-bold mb-8">
-          Your Impact Dashboard
+          Your impact dashboard
         </h1>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
@@ -187,7 +187,7 @@ export default function DashboardPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Trees Planted</CardTitle>
+              <CardTitle className="text-sm font-medium">Trees planted</CardTitle>
               <Leaf className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -199,7 +199,7 @@ export default function DashboardPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Daily Goal ({dailyTrees}/{DAILY_GOAL} Trees)</CardTitle>
+              <CardTitle className="text-sm font-medium">Daily goal ({dailyTrees}/{DAILY_GOAL} Trees)</CardTitle>
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -211,7 +211,7 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Submission History</CardTitle>
+            <CardTitle>Submission history</CardTitle>
             <CardDescription>
               A log of your recent purchase and receipt uploads.
             </CardDescription>

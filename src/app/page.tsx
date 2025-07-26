@@ -56,12 +56,12 @@ export default function Home() {
   const features = [
     {
       icon: <Package className="h-10 w-10 text-accent" />,
-      title: 'Get Your ClickBag',
+      title: 'Get your ClickBag',
       description: 'Receive your FREE bag via package, by following us on Instagram (@click_bag_), or get it on the street. Sponsored messages on the bag fund tree planting at no cost to you.',
     },
     {
       icon: <ScanLine className="h-10 w-10 text-accent" />,
-      title: 'Scan & Upload',
+      title: 'Scan & upload',
       description: 'Use your phone to scan the QR code on your ClickBag, then upload photos of your receipt and purchase.',
     },
     {
@@ -71,7 +71,7 @@ export default function Home() {
     },
     {
       icon: <Leaf className="h-10 w-10 text-accent" />,
-      title: 'Plant Trees',
+      title: 'Plant trees',
       description: 'Your accumulated ClickPoints contribute directly to tree planting projects around the world.',
     },
   ];
@@ -127,7 +127,7 @@ export default function Home() {
           >
             <Link href="/register">
               <Button size="lg" className="shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow">
-                Get Started <ArrowRight className="ml-2 h-5 w-5" />
+                Get started <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
           </motion.div>
@@ -144,7 +144,7 @@ export default function Home() {
             variants={FADE_UP_ANIMATION_VARIANTS}
             className="text-center"
           >
-            <h2 className="font-headline text-3xl md:text-4xl font-bold">Simple Steps to a Greener World</h2>
+            <h2 className="font-headline text-3xl md:text-4xl font-bold">Simple steps to a greener world</h2>
             <p className="text-muted-foreground md:text-lg mt-2">Making an impact has never been easier.</p>
           </motion.div>
           <motion.div
@@ -200,7 +200,7 @@ export default function Home() {
             className="container mx-auto grid md:grid-cols-2 gap-12 px-4 md:px-6 items-center"
         >
           <motion.div variants={FADE_UP_ANIMATION_VARIANTS}>
-            <h2 className="font-headline text-3xl md:text-4xl font-bold">Our Mission & Our Sponsors</h2>
+            <h2 className="font-headline text-3xl md:text-4xl font-bold">Our mission & our sponsors</h2>
             <p className="text-muted-foreground mt-4">
               At ClickBag, we believe that small actions can lead to massive change. Our mission is to transform
               everyday purchases into a force for environmental good. We replace single-use bags with our reusable
@@ -248,7 +248,7 @@ export default function Home() {
             variants={FADE_UP_ANIMATION_VARIANTS}
             className="container mx-auto px-4 md:px-6 text-center"
         >
-            <h2 className="font-headline text-3xl md:text-4xl font-bold">Our Collective Impact</h2>
+            <h2 className="font-headline text-3xl md:text-4xl font-bold">Our collective impact</h2>
             <p className="text-muted-foreground md:text-lg mt-2 mb-8">
               See what our community has achieved together.
             </p>
@@ -269,7 +269,7 @@ export default function Home() {
                 <motion.div variants={FADE_UP_ANIMATION_VARIANTS}>
                     <Card className="p-8 shadow-lg">
                         <Leaf className="h-12 w-12 text-accent mx-auto mb-4" />
-                        <h3 className="font-headline text-2xl font-semibold mb-2">Trees Planted</h3>
+                        <h3 className="font-headline text-2xl font-semibold mb-2">Trees planted</h3>
                         <div className="relative">
                           <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500", isTreesLocked ? 'opacity-100' : 'opacity-0')}>
                             <div className="absolute inset-0 bg-background/50 backdrop-blur-md"></div>
@@ -282,7 +282,7 @@ export default function Home() {
                 <motion.div variants={FADE_UP_ANIMATION_VARIANTS}>
                     <Card className="p-8 shadow-lg">
                         <Coins className="h-12 w-12 text-accent mx-auto mb-4" />
-                        <h3 className="font-headline text-2xl font-semibold mb-2">Total ClickPoints Earned</h3>
+                        <h3 className="font-headline text-2xl font-semibold mb-2">Total ClickPoints earned</h3>
                         <div className="relative">
                            <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500", isPointsLocked ? 'opacity-100' : 'opacity-0')}>
                             <div className="absolute inset-0 bg-background/50 backdrop-blur-md"></div>
@@ -305,7 +305,7 @@ export default function Home() {
             variants={FADE_UP_ANIMATION_VARIANTS}
             className="container mx-auto px-4 md:px-6 text-center"
         >
-          <h2 className="font-headline text-3xl md:text-4xl font-bold">Ready to Make an Impact?</h2>
+          <h2 className="font-headline text-3xl md:text-4xl font-bold">Ready to make an impact?</h2>
           <p className="text-muted-foreground md:text-lg mt-2 mb-8">
             Become a part of the ClickBag community and start turning your actions into a greener planet.
           </p>
@@ -327,7 +327,7 @@ export default function Home() {
             className="container mx-auto px-4 md:px-6 text-center"
         >
           <Handshake className="h-12 w-12 text-accent mx-auto mb-4" />
-          <h2 className="font-headline text-3xl md:text-4xl font-bold">Are You a Sponsor?</h2>
+          <h2 className="font-headline text-3xl md:text-4xl font-bold">Are you a sponsor?</h2>
           <p className="text-muted-foreground md:text-lg mt-2 mb-8 max-w-2xl mx-auto">
             Help us grow our impact. Sponsoring ClickBags is an investment in nature and a unique way to advertise your brand on a sustainable product.
           </p>
