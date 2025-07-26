@@ -186,7 +186,7 @@ export default function Home() {
                     <div className="relative">
                       <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500", isTreesLocked ? 'opacity-100' : 'opacity-0')}>
                         <div className="absolute inset-0 bg-background/50 backdrop-blur-md"></div>
-                        <Lock className="h-12 w-12 text-accent z-10"/>
+                        <Lock className="h-10 w-10 text-accent z-10 rotate-[-15deg]"/>
                       </div>
                       <AnimatedCounter end={communityStats.totalTreesPlanted} className={cn("font-headline text-5xl md:text-7xl font-bold text-primary transition-all duration-500", isTreesLocked ? 'blur-lg' : 'blur-none')} />
                     </div>
@@ -197,7 +197,7 @@ export default function Home() {
                     <div className="relative">
                        <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500", isPointsLocked ? 'opacity-100' : 'opacity-0')}>
                         <div className="absolute inset-0 bg-background/50 backdrop-blur-md"></div>
-                        <Lock className="h-12 w-12 text-accent z-10"/>
+                        <Lock className="h-10 w-10 text-accent z-10 rotate-[-15deg]"/>
                       </div>
                       <AnimatedCounter end={communityStats.totalClickPoints} className={cn("font-headline text-5xl md:text-7xl font-bold text-primary transition-all duration-500", isPointsLocked ? 'blur-lg' : 'blur-none')} />
                     </div>
