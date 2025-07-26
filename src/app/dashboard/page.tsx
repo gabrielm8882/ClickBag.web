@@ -191,13 +191,13 @@ export default function DashboardPage() {
           </h1>
           {userData.totalPoints > 0 && (
              <motion.div
-                className="flex items-center gap-2 text-accent bg-accent/10 px-3 py-1 rounded-full"
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: 'spring', stiffness: 300 }}
+                className="flex items-center gap-2 text-accent bg-accent/10 px-3 py-1 rounded-full cursor-pointer"
+                whileHover={{ scale: 1.03 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
               >
                 <motion.div
-                  whileHover={{ rotate: [-5, 5, -2, 2, 0], filter: 'drop-shadow(0 0 4px hsl(var(--accent)))' }}
-                  transition={{ duration: 0.5 }}
+                  whileHover={{ rotate: -8, scale: 1.2, filter: 'drop-shadow(0 0 6px hsl(var(--accent) / 0.7))' }}
+                  transition={{ duration: 0.2, ease: 'easeInOut' }}
                 >
                   <Crown className="h-5 w-5" />
                 </motion.div>
