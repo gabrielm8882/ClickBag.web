@@ -3,7 +3,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Leaf, ScanLine, Coins, ArrowRight, Info, User, Zap, Package, Handshake, Lock } from 'lucide-react';
+import { Leaf, ScanLine, Coins, ArrowRight, Info, User, Zap, Package, Handshake, Lock, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -11,7 +11,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
+import { useRef } from 'react';
 
 function AnimatedCounter({ end, duration = 2000, className }: { end: number; duration?: number, className?: string }) {
   const [count, setCount] = useState(0);
@@ -37,6 +38,36 @@ interface CommunityStats {
     totalTreesPlanted: number;
     totalClickPoints: number;
 }
+
+const BagToTreeAnimation = () => {
+    const ref = useRef(null);
+    const isInView = useInView(ref, { once: true, amount: 0.5 });
+  
+    const variants = {
+      hidden: { opacity: 0, scale: 0.5, rotate: -90 },
+      visible: { opacity: 1, scale: 1, rotate: 0, transition: { duration: 0.7, ease: 'easeOut' } },
+    };
+  
+    return (
+      <div ref={ref} className="relative w-full h-[400px] flex items-center justify-center bg-secondary rounded-lg shadow-lg overflow-hidden">
+        <motion.div
+          animate={{ opacity: isInView ? 0 : 1, scale: isInView ? 0.2 : 1, rotate: isInView ? 180 : 0 }}
+          transition={{ duration: 0.8, ease: 'easeInOut' }}
+          className="absolute"
+        >
+          <ShoppingBag className="h-32 w-32 text-primary" />
+        </motion.div>
+        <motion.div
+          initial="hidden"
+          animate={isInView ? 'visible' : 'hidden'}
+          variants={variants}
+          className="absolute"
+        >
+          <Leaf className="h-40 w-40 text-accent" />
+        </motion.div>
+      </div>
+    );
+  };
 
 export default function Home() {
   const { user } = useAuth();
@@ -227,14 +258,7 @@ export default function Home() {
             </div>
           </motion.div>
           <motion.div variants={FADE_UP_ANIMATION_VARIANTS}>
-            <Image
-              src="https://placehold.co/600x400.png"
-              alt="Sponsored ClickBag"
-              width={600}
-              height={400}
-              className="rounded-lg shadow-lg"
-              data-ai-hint="shopping bag"
-            />
+             <BagToTreeAnimation />
           </motion.div>
         </motion.div>
       </section>
@@ -354,3 +378,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
