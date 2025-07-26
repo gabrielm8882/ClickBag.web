@@ -23,7 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Coins, Leaf, Target, ShieldCheck } from 'lucide-react';
+import { Coins, Leaf, Target, ShieldCheck, Crown } from 'lucide-react';
 import { format, startOfDay, endOfDay } from 'date-fns';
 import {
   AlertDialog,
@@ -35,6 +35,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { LeafLoader } from '@/components/ui/leaf-loader';
+import type { UserData } from '@/hooks/use-auth';
 
 interface Submission {
   id: string;
@@ -44,18 +45,12 @@ interface Submission {
   status: 'Approved' | 'Rejected';
 }
 
-interface UserData {
-  totalPoints: number;
-  totalTrees: number;
-}
-
 const DAILY_GOAL = 3; // 3 trees per day
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth();
+  const { user, userData, loading } = useAuth();
   const router = useRouter();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [userData, setUserData] = useState<UserData>({ totalPoints: 0, totalTrees: 0 });
   const [dailyTrees, setDailyTrees] = useState(0);
   const [pageLoading, setPageLoading] = useState(true);
   const [progressValue, setProgressValue] = useState(0);
@@ -68,12 +63,9 @@ export default function DashboardPage() {
   }, [user, loading, router]);
   
   useEffect(() => {
-    // Check session storage for the new user flag.
     const isNewUser = sessionStorage.getItem('isNewUser');
     if (isNewUser) {
       setShowPrivacyNotice(true);
-      // It's important to remove the flag after showing the notice
-      // so it doesn't pop up on every page refresh.
       sessionStorage.removeItem('isNewUser');
     }
   }, []);
@@ -84,7 +76,6 @@ export default function DashboardPage() {
       const startOfToday = startOfDay(today);
       const endOfToday = endOfDay(today);
 
-      // Listener for user's submissions
       const q = query(collection(db, 'submissions'), where('userId', '==', user.uid));
       const unsubscribeSubmissions = onSnapshot(q, (querySnapshot) => {
         const userSubmissions: Submission[] = [];
@@ -100,7 +91,6 @@ export default function DashboardPage() {
             } as Submission;
             userSubmissions.push(submission);
 
-            // Check for daily progress
             const submissionDate = submission.date.toDate();
             if (submissionDate >= startOfToday && submissionDate <= endOfToday && submission.status === 'Approved') {
                 todayTreeCount += 1;
@@ -110,25 +100,16 @@ export default function DashboardPage() {
         setDailyTrees(todayTreeCount);
         setPageLoading(false);
       });
-
-      // Listener for user's aggregate data
-      const userDocRef = doc(db, 'users', user.uid);
-      const unsubscribeUserData = onSnapshot(userDocRef, (doc) => {
-        if (doc.exists()) {
-          setUserData(doc.data() as UserData);
-        }
-      });
       
       return () => {
         unsubscribeSubmissions();
-        unsubscribeUserData();
       };
     }
   }, [user]);
 
   useEffect(() => {
     const newProgress = Math.min((dailyTrees / DAILY_GOAL) * 100, 100);
-    const animationTimeout = setTimeout(() => setProgressValue(newProgress), 100); // Small delay for animation
+    const animationTimeout = setTimeout(() => setProgressValue(newProgress), 100);
     return () => clearTimeout(animationTimeout);
   }, [dailyTrees]);
 
@@ -136,7 +117,7 @@ export default function DashboardPage() {
     setShowPrivacyNotice(false);
   };
 
-  if (loading || pageLoading || !user) {
+  if (loading || pageLoading || !user || !userData) {
     return (
       <div className="flex flex-col justify-center items-center h-screen">
         <LeafLoader />
@@ -169,7 +150,15 @@ export default function DashboardPage() {
       </AlertDialog>
 
       <div className="container mx-auto py-8 px-4 md:px-6">
-        <h1 className="font-headline text-3xl md:text-4xl font-bold mb-8">
+        {userData.totalPoints > 0 && (
+          <div className="flex items-center justify-center gap-2 mb-4 text-accent">
+            <Crown className="h-6 w-6" />
+            <h2 className="font-headline text-xl font-semibold">
+              ClickBag Contributor
+            </h2>
+          </div>
+        )}
+        <h1 className="font-headline text-3xl md:text-4xl font-bold mb-8 text-center md:text-left">
           Your impact dashboard
         </h1>
 

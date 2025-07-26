@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Leaf, LogOut, User as UserIcon, Menu } from 'lucide-react';
+import { Leaf, LogOut, User as UserIcon, Menu, Crown } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
 import {
@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils';
 
 
 export function Header() {
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -122,7 +122,10 @@ export function Header() {
           {user ? (
               <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full ring-2 ring-offset-background ring-offset-2 ring-accent/70">
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full ring-2 ring-offset-background ring-offset-2 ring-accent">
+                  {userData && userData.totalPoints > 0 && (
+                      <Crown className="absolute -top-2 -right-2 h-4 w-4 text-accent rotate-12" />
+                  )}
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
                     <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
