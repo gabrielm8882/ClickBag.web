@@ -14,7 +14,7 @@ export default function VerifyEmailPage() {
         <CardTitle className="text-2xl font-headline">Verify your email</CardTitle>
         <CardDescription>
           We've sent a verification link to your email address. Please click the link to continue.
-        </p>
+        </CardDescription>
       </CardHeader>
       <CardContent className="text-center">
         <p className="text-muted-foreground mb-6">
