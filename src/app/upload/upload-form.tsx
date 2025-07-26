@@ -56,10 +56,10 @@ export default function UploadForm() {
         (error) => {
           switch (error.code) {
             case error.PERMISSION_DENIED:
-              setLocationError("You denied the request for Geolocation. This is optional but helps with validation.");
+              setLocationError("Location access is optional but helps with validation.");
               break;
             case error.POSITION_UNAVAILABLE:
-              setLocationError("Location information is unavailable.");
+              setLocationError("Location information is currently unavailable.");
               break;
             case error.TIMEOUT:
               setLocationError("The request to get user location timed out.");
@@ -223,14 +223,16 @@ export default function UploadForm() {
        
       {(userLocation || locationError) && (
         <Alert className={cn("mb-8", {
-            "bg-orange-50 border-orange-200 text-orange-800 dark:bg-orange-950 dark:border-orange-800 dark:text-orange-300": !locationError
+            "bg-orange-50 border-orange-200 text-orange-800 dark:bg-orange-950 dark:border-orange-800 dark:text-orange-300": !locationError && !userLocation,
+            "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300": userLocation
         })} variant={locationError ? "destructive" : "default"}>
           <MapPin className={cn("h-4 w-4", {
-              "text-orange-500 dark:text-orange-400": !locationError
+              "text-orange-500 dark:text-orange-400": !userLocation,
+              "text-blue-500 dark:text-blue-400": userLocation
           })} />
-          <AlertTitle>{locationError ? 'Location access denied' : 'Location detected'}</AlertTitle>
+          <AlertTitle>{userLocation ? 'Location Detected' : 'Location Optional'}</AlertTitle>
           <AlertDescription>
-            {locationError 
+            {locationError && !userLocation
               ? locationError
               : `Your approximate location is being used to help with validation. (Lat: ${userLocation?.latitude.toFixed(4)}, Lon: ${userLocation?.longitude.toFixed(4)})`
             }

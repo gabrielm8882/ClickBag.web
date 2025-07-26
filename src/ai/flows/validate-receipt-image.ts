@@ -14,6 +14,7 @@ import {z} from 'genkit';
 import { determineGeolocation } from './determine-geolocation';
 import { auth, db } from '@/lib/firebase';
 import { doc, runTransaction, serverTimestamp, collection, addDoc, Timestamp } from 'firebase/firestore';
+import {getAuth} from 'firebase-admin/auth';
 
 
 const POINTS_PER_TREE = 10;
@@ -61,6 +62,8 @@ const validateReceiptImagePrompt = ai.definePrompt({
 The current server date and time is {{currentDateTime}} (in ISO 8601 format). You MUST use this as the absolute reference for "now". Be aware that the user may be in a different timezone.
 {{#if userLatitude}}
 The user's current location is approximately Latitude: {{userLatitude}}, Longitude: {{userLongitude}}. Use this as a clue to verify if they are near the purchase location on the receipt.
+{{else}}
+The user has not provided their location. You must perform the validation without it.
 {{/if}}
 
 You must perform the following checks with extreme scrutiny:
@@ -72,7 +75,7 @@ You must perform the following checks with extreme scrutiny:
     b. The receipt must be for a purchase made on the same calendar day relative to the current server time ({{currentDateTime}}).
     c. Check if the time on the receipt is approximately correct for the inferred timezone. A receipt dated today is valid even if its time appears to be in the "future" from the server's perspective, as it could be from a different timezone.
 5.  **Duplicate Check**: Be extra vigilant for submissions that look very similar to each other. Submissions are checked against a database of photos from the last 15 days. If you suspect this is a duplicate, reject it.
-6.  **Location Cross-Reference (if available)**: If the user's coordinates are provided, compare them to the store location on the receipt. They should be plausibly close.
+6.  **Location Cross-Reference (if available)**: If the user's coordinates are provided, compare them to the store location on the receipt. They should be plausibly close. If no coordinates are provided, skip this check.
 
 If all checks pass:
 - Set 'isValid' to true.
@@ -99,10 +102,13 @@ const validateReceiptImageFlow = ai.defineFlow(
     name: 'validateReceiptImageFlow',
     inputSchema: ValidateReceiptImageInputSchema,
     outputSchema: ValidateReceiptImageOutputSchema,
+    auth: {
+      required: true,
+    }
   },
-  async (input) => {
-    const user = auth.currentUser;
-    if (!user) {
+  async (input, context) => {
+    const uid = context.auth?.uid;
+    if (!uid) {
         throw new Error('User not authenticated.');
     }
     
@@ -127,7 +133,7 @@ const validateReceiptImageFlow = ai.defineFlow(
 
     // Record submission and update points in Firestore
     await addDoc(collection(db, 'submissions'), {
-        userId: user.uid,
+        userId: uid,
         date: Timestamp.now(),
         status: output.isValid ? 'Approved' : 'Rejected',
         points: output.clickPoints,
@@ -139,7 +145,7 @@ const validateReceiptImageFlow = ai.defineFlow(
     if (output.isValid) {
         try {
             await runTransaction(db, async (transaction) => {
-                const userDocRef = doc(db, 'users', user.uid);
+                const userDocRef = doc(db, 'users', uid);
                 const communityStatsRef = doc(db, 'community-stats', 'global');
 
                 const userDoc = await transaction.get(userDocRef);
