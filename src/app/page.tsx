@@ -334,9 +334,7 @@ export default function Home() {
             variants={FADE_UP_ANIMATION_VARIANTS}
             className="container mx-auto px-4 md:px-6 text-center"
         >
-          <motion.div whileHover={{ rotate: [0, -5, 5, -5, 5, 0] }} transition={{ duration: 0.5 }}>
-            <Handshake className="h-12 w-12 text-accent mx-auto mb-4" />
-          </motion.div>
+          <Handshake className="h-12 w-12 text-accent mx-auto mb-4" />
           <h2 className="font-headline text-3xl md:text-4xl font-bold">Are you a sponsor?</h2>
           <p className="text-muted-foreground md:text-lg mt-2 mb-8 max-w-2xl mx-auto">
             Help us grow our impact. Sponsoring ClickBags is an investment in nature and a unique way to advertise your brand on a sustainable product.
