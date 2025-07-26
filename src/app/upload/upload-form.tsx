@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, UploadCloud, X, CheckCircle, AlertTriangle, MapPin } from 'lucide-react';
+import { Loader2, UploadCloud, X, CheckCircle, AlertTriangle, MapPin, Clock } from 'lucide-react';
 import { handleImageUpload } from '@/lib/actions';
 import type { ValidateReceiptImageOutput } from '@/ai/flows/validate-receipt-image';
 import { useToast } from '@/hooks/use-toast';
@@ -29,7 +29,31 @@ export default function UploadForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ValidateReceiptImageOutput | null>(null);
+  const [isTimeDialogOpen, setIsTimeDialogOpen] = useState(false);
+  const [spainTime, setSpainTime] = useState('');
   const { toast } = useToast();
+
+  useEffect(() => {
+    const getSpainTime = () => {
+      const now = new Date();
+      try {
+        const timeString = new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'Europe/Madrid',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+          timeZoneName: 'short',
+        }).format(now);
+        setSpainTime(timeString);
+        setIsTimeDialogOpen(true);
+      } catch (e) {
+        // Timezone not supported, do not show dialog
+        console.error("Timezone 'Europe/Madrid' may not be supported in this environment.");
+      }
+    };
+    getSpainTime();
+  }, []);
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -134,6 +158,27 @@ export default function UploadForm() {
 
   return (
     <>
+       <AlertDialog open={isTimeDialogOpen} onOpenChange={setIsTimeDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex justify-center mb-4">
+              <Clock className="h-16 w-16 text-accent"/>
+            </div>
+            <AlertDialogTitle className="text-center font-headline text-2xl">
+              Current Time in Spain
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-lg font-mono pt-2">
+              {spainTime}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setIsTimeDialogOpen(false)} className="w-full">
+              Close
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {renderFileUploader('purchase-photo', 'Photo of Your Purchase', purchasePhoto, purchasePreview, (e) => handleFileChange(e, setPurchasePhoto, setPurchasePreview), () => { setPurchasePhoto(null); setPurchasePreview(null); }, 'product photo')}
