@@ -50,17 +50,21 @@ export default function RegisterPage() {
     },
   });
 
+  const handleSuccessfulRegistration = () => {
+    sessionStorage.setItem('isNewUser', 'true');
+    toast({
+      title: "Account Created",
+      description: "Welcome to ClickBag!",
+    });
+    router.push('/dashboard');
+  }
+
   const onSubmit = async (values: z.infer<typeof registerSchema>) => {
     setIsLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       await updateProfile(userCredential.user, { displayName: values.name });
-      
-      toast({
-        title: "Account Created",
-        description: "Welcome to ClickBag!",
-      });
-      router.push('/dashboard');
+      handleSuccessfulRegistration();
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -77,11 +81,7 @@ export default function RegisterPage() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      toast({
-        title: "Account Created",
-        description: "Welcome to ClickBag!",
-      });
-      router.push('/dashboard');
+      handleSuccessfulRegistration();
     } catch (error: any) {
       toast({
         variant: 'destructive',
