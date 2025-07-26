@@ -68,13 +68,15 @@ export default function DashboardPage() {
   }, [user, loading, router]);
   
   useEffect(() => {
-    if (user) {
-        const isNewUser = sessionStorage.getItem('isNewUser');
-        if (isNewUser === 'true') {
-            setShowPrivacyNotice(true);
-        }
+    // Check session storage for the new user flag.
+    const isNewUser = sessionStorage.getItem('isNewUser');
+    if (isNewUser) {
+      setShowPrivacyNotice(true);
+      // It's important to remove the flag after showing the notice
+      // so it doesn't pop up on every page refresh.
+      sessionStorage.removeItem('isNewUser');
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -132,7 +134,6 @@ export default function DashboardPage() {
 
   const handleClosePrivacyNotice = () => {
     setShowPrivacyNotice(false);
-    sessionStorage.removeItem('isNewUser');
   };
 
   if (loading || pageLoading || !user) {

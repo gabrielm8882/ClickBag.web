@@ -82,18 +82,17 @@ export default function RegisterPage() {
       const result = await signInWithPopup(auth, provider);
       const additionalInfo = getAdditionalUserInfo(result);
       
+      // We set a session storage item to indicate a new user on the client side.
+      // The dashboard will pick this up to show the privacy notice.
       if (additionalInfo?.isNewUser) {
         sessionStorage.setItem('isNewUser', 'true');
-        toast({
-            title: "Account created",
-            description: "Welcome to ClickBag!",
-        });
-      } else {
-         toast({
-            title: "Login successful",
-            description: "Welcome back!",
-        });
       }
+      
+      toast({
+        title: additionalInfo?.isNewUser ? "Account created" : "Login successful",
+        description: additionalInfo?.isNewUser ? "Welcome to ClickBag!" : "Welcome back!",
+      });
+
       router.push('/dashboard');
     } catch (error: any) {
       toast({
