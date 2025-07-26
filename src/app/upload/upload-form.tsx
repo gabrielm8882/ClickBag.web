@@ -17,11 +17,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, UploadCloud, X, CheckCircle, AlertTriangle, MapPin, Clock } from 'lucide-react';
+import { Loader2, UploadCloud, X, CheckCircle, AlertTriangle, MapPin, Clock, Camera } from 'lucide-react';
 import { handleImageUpload } from '@/lib/actions';
 import type { ValidateReceiptImageOutput } from '@/ai/flows/validate-receipt-image';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CameraCapture } from '@/components/camera-capture';
 
 interface UserLocation {
   latitude: number;
@@ -107,6 +109,16 @@ export default function UploadForm() {
     }
   };
 
+  const handleCapture = (
+    file: File,
+    setter: React.Dispatch<React.SetStateAction<File | null>>,
+    previewSetter: React.Dispatch<React.SetStateAction<string | null>>
+  ) => {
+    setter(file);
+    previewSetter(URL.createObjectURL(file));
+  };
+
+
   const toDataURL = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -134,12 +146,8 @@ export default function UploadForm() {
         userLatitude: userLocation?.latitude,
         userLongitude: userLocation?.longitude,
       });
-
-      if (aiResult.error) {
-        throw new Error(aiResult.error);
-      }
       
-      setResult(aiResult.data);
+      setResult(aiResult);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
       setError(errorMessage);
@@ -153,17 +161,17 @@ export default function UploadForm() {
     }
   };
   
-  const renderFileUploader = (
-    id: string,
+  const renderUploader = (
+    id: 'purchase' | 'receipt',
     label: string,
     file: File | null,
     preview: string | null,
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void,
-    onClear: () => void,
+    fileSetter: React.Dispatch<React.SetStateAction<File | null>>,
+    previewSetter: React.Dispatch<React.SetStateAction<string | null>>,
     dataAiHint: string
   ) => (
     <div className="space-y-2">
-      <Label htmlFor={id} className="font-semibold">{label}</Label>
+      <Label className="font-semibold">{label}</Label>
       <Card className="p-4">
         {preview ? (
           <div className="relative group">
@@ -180,19 +188,32 @@ export default function UploadForm() {
               variant="destructive"
               size="icon"
               className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={onClear}
+              onClick={() => { fileSetter(null); previewSetter(null); }}
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
         ) : (
-          <label htmlFor={id} className="cursor-pointer">
-            <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-md hover:border-accent transition-colors">
-              <UploadCloud className="h-12 w-12 text-muted-foreground" />
-              <p className="mt-2 text-sm text-muted-foreground">Drag & drop or click to upload</p>
-              <Input id={id} type="file" className="sr-only" onChange={onChange} accept="image/*" />
-            </div>
-          </label>
+          <Tabs defaultValue="upload" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="upload"><UploadCloud className="mr-2" />Upload File</TabsTrigger>
+              <TabsTrigger value="camera"><Camera className="mr-2" />Use Camera</TabsTrigger>
+            </TabsList>
+            <TabsContent value="upload">
+              <label htmlFor={`${id}-photo`} className="cursor-pointer">
+                <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-md hover:border-accent transition-colors mt-4">
+                  <UploadCloud className="h-12 w-12 text-muted-foreground" />
+                  <p className="mt-2 text-sm text-muted-foreground">Drag & drop or click to upload</p>
+                  <Input id={`${id}-photo`} type="file" className="sr-only" onChange={(e) => handleFileChange(e, fileSetter, previewSetter)} accept="image/*" />
+                </div>
+              </label>
+            </TabsContent>
+            <TabsContent value="camera">
+                <div className="mt-4">
+                  <CameraCapture onCapture={(file) => handleCapture(file, fileSetter, previewSetter)} />
+                </div>
+            </TabsContent>
+          </Tabs>
         )}
       </Card>
     </div>
@@ -243,8 +264,8 @@ export default function UploadForm() {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {renderFileUploader('purchase-photo', 'Photo of your purchase', purchasePhoto, purchasePreview, (e) => handleFileChange(e, setPurchasePhoto, setPurchasePreview), () => { setPurchasePhoto(null); setPurchasePreview(null); }, 'product photo')}
-          {renderFileUploader('receipt-photo', 'Photo of your receipt', receiptPhoto, receiptPreview, (e) => handleFileChange(e, setReceiptPhoto, setReceiptPreview), () => { setReceiptPhoto(null); setReceiptPreview(null); }, 'receipt photo')}
+          {renderUploader('purchase', 'Photo of your purchase', purchasePhoto, purchasePreview, setPurchasePhoto, setPurchasePreview, 'product photo')}
+          {renderUploader('receipt', 'Photo of your receipt', receiptPhoto, receiptPreview, setReceiptPhoto, setReceiptPreview, 'receipt photo')}
         </div>
 
         {error && (

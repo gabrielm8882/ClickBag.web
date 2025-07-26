@@ -5,13 +5,14 @@ import { validateReceiptImage, type ValidateReceiptImageInput, type ValidateRece
 
 export async function handleImageUpload(
   input: ValidateReceiptImageInput
-): Promise<{ data: ValidateReceiptImageOutput | null, error: string | null }> {
+): Promise<ValidateReceiptImageOutput> {
   try {
     const result = await validateReceiptImage(input);
-    return { data: result, error: null };
+    return result;
   } catch (e) {
     console.error(e);
     const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred during AI validation.';
-    return { data: null, error: errorMessage };
+    // Re-throw the error to be caught by the client-side form handler
+    throw new Error(errorMessage);
   }
 }
