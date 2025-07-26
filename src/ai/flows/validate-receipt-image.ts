@@ -12,6 +12,13 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { determineGeolocation } from './determine-geolocation';
+import { auth, db } from '@/lib/firebase';
+import { doc, runTransaction, serverTimestamp, collection, addDoc, Timestamp } from 'firebase/firestore';
+
+
+const POINTS_PER_TREE = 10;
+const TREES_PER_VALIDATION = 1;
+
 
 const ValidateReceiptImageInputSchema = z.object({
   purchasePhotoDataUri: z
@@ -50,7 +57,7 @@ const validateReceiptImagePrompt = ai.definePrompt({
   name: 'validateReceiptImagePrompt',
   input: {schema: PromptInputSchema},
   output: {schema: ValidateReceiptImageOutputSchema},
-  prompt: `You are an AI assistant that validates user-submitted photos for a sustainability rewards program.
+  prompt: `You are an AI assistant that validates user-submitted photos for a sustainability rewards program called ClickBag.
 The current server date and time is {{currentDateTime}} (in ISO 8601 format). You MUST use this as the absolute reference for "now". Be aware that the user may be in a different timezone.
 {{#if userLatitude}}
 The user's current location is approximately Latitude: {{userLatitude}}, Longitude: {{userLongitude}}. Use this as a clue to verify if they are near the purchase location on the receipt.
@@ -94,6 +101,11 @@ const validateReceiptImageFlow = ai.defineFlow(
     outputSchema: ValidateReceiptImageOutputSchema,
   },
   async (input) => {
+    const user = auth.currentUser;
+    if (!user) {
+        throw new Error('User not authenticated.');
+    }
+    
     // Get the current date and time on the server to pass to the prompt.
     const currentDateTime = new Date().toISOString();
 
@@ -112,6 +124,53 @@ const validateReceiptImageFlow = ai.defineFlow(
     if (output.isValid && geolocationResult?.geolocation) {
       output.geolocation = geolocationResult.geolocation;
     }
+
+    // Record submission and update points in Firestore
+    await addDoc(collection(db, 'submissions'), {
+        userId: user.uid,
+        date: Timestamp.now(),
+        status: output.isValid ? 'Approved' : 'Rejected',
+        points: output.clickPoints,
+        geolocation: output.geolocation || 'N/A',
+        validationDetails: output.validationDetails,
+    });
+
+
+    if (output.isValid) {
+        try {
+            await runTransaction(db, async (transaction) => {
+                const userDocRef = doc(db, 'users', user.uid);
+                const communityStatsRef = doc(db, 'community-stats', 'global');
+
+                const userDoc = await transaction.get(userDocRef);
+                const communityStatsDoc = await transaction.get(communityStatsRef);
+
+                // Update user stats
+                const newTotalPoints = (userDoc.data()?.totalPoints || 0) + output.clickPoints;
+                const newTotalTrees = Math.floor(newTotalPoints / POINTS_PER_TREE);
+                
+                if (!userDoc.exists()) {
+                    transaction.set(userDocRef, { totalPoints: newTotalPoints, totalTrees: newTotalTrees });
+                } else {
+                    transaction.update(userDocRef, { totalPoints: newTotalPoints, totalTrees: newTotalTrees });
+                }
+
+                // Update community stats
+                const newCommunityPoints = (communityStatsDoc.data()?.totalClickPoints || 0) + output.clickPoints;
+                const newCommunityTrees = (communityStatsDoc.data()?.totalTreesPlanted || 0) + TREES_PER_VALIDATION;
+
+                if (!communityStatsDoc.exists()) {
+                    transaction.set(communityStatsRef, { totalClickPoints: newCommunityPoints, totalTreesPlanted: newCommunityTrees });
+                } else {
+                    transaction.update(communityStatsRef, { totalClickPoints: newCommunityPoints, totalTreesPlanted: newCommunityTrees });
+                }
+            });
+        } catch (e) {
+            console.error("Transaction failed: ", e);
+            throw new Error("Failed to update user points.");
+        }
+    }
+
 
     return output;
   }

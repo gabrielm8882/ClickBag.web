@@ -1,9 +1,11 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { db } from '@/lib/firebase';
+import { collection, query, where, onSnapshot, doc, getDoc, Timestamp, startOfDay, endOfDay } from 'firebase/firestore';
 import {
   Card,
   CardContent,
@@ -22,23 +24,31 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Coins, Leaf, Target, Loader2 } from 'lucide-react';
+import { format } from 'date-fns';
 
-const MOCK_SUBMISSIONS = [
-  { date: '2024-05-20', store: 'Green Grocer', points: 120, status: 'Approved' },
-  { date: '2024-05-18', store: 'Eco Goods', points: 85, status: 'Approved' },
-  { date: '2024-05-15', store: 'SuperMart', points: 0, status: 'Rejected' },
-  { date: '2024-05-12', store: 'Local Market', points: 150, status: 'Approved' },
-  { date: '2024-05-10', store: 'The Corner Store', points: 45, status: 'Approved' },
-];
+interface Submission {
+  id: string;
+  date: Timestamp;
+  geolocation: string;
+  points: number;
+  status: 'Approved' | 'Rejected';
+}
 
-const TOTAL_POINTS = 400;
-const POINTS_PER_TREE = 100;
-const TREES_PLANTED = Math.floor(TOTAL_POINTS / POINTS_PER_TREE);
-const PROGRESS_TO_NEXT_TREE = (TOTAL_POINTS % POINTS_PER_TREE) * 100 / POINTS_PER_TREE;
+interface UserData {
+  totalPoints: number;
+  totalTrees: number;
+}
+
+const DAILY_GOAL = 3; // 3 trees per day
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [userData, setUserData] = useState<UserData>({ totalPoints: 0, totalTrees: 0 });
+  const [dailyTrees, setDailyTrees] = useState(0);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [progressValue, setProgressValue] = useState(0);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -46,7 +56,61 @@ export default function DashboardPage() {
     }
   }, [user, loading, router]);
 
-  if (loading || !user) {
+  useEffect(() => {
+    if (user) {
+      const today = new Date();
+      const startOfToday = startOfDay(today);
+      const endOfToday = endOfDay(today);
+
+      // Listener for user's submissions
+      const q = query(collection(db, 'submissions'), where('userId', '==', user.uid));
+      const unsubscribeSubmissions = onSnapshot(q, (querySnapshot) => {
+        const userSubmissions: Submission[] = [];
+        let todayTreeCount = 0;
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const submission = {
+                id: doc.id,
+                date: data.date,
+                geolocation: data.geolocation || 'N/A',
+                points: data.points,
+                status: data.status,
+            } as Submission;
+            userSubmissions.push(submission);
+
+            // Check for daily progress
+            const submissionDate = submission.date.toDate();
+            if (submissionDate >= startOfToday && submissionDate <= endOfToday && submission.status === 'Approved') {
+                todayTreeCount += 1;
+            }
+        });
+        setSubmissions(userSubmissions.sort((a, b) => b.date.toMillis() - a.date.toMillis()));
+        setDailyTrees(todayTreeCount);
+        setPageLoading(false);
+      });
+
+      // Listener for user's aggregate data
+      const userDocRef = doc(db, 'users', user.uid);
+      const unsubscribeUserData = onSnapshot(userDocRef, (doc) => {
+        if (doc.exists()) {
+          setUserData(doc.data() as UserData);
+        }
+      });
+      
+      return () => {
+        unsubscribeSubmissions();
+        unsubscribeUserData();
+      };
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const newProgress = Math.min((dailyTrees / DAILY_GOAL) * 100, 100);
+    const animationTimeout = setTimeout(() => setProgressValue(newProgress), 100); // Small delay for animation
+    return () => clearTimeout(animationTimeout);
+  }, [dailyTrees]);
+
+  if (loading || pageLoading || !user) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-accent" />
@@ -67,7 +131,7 @@ export default function DashboardPage() {
             <Coins className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{TOTAL_POINTS.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{userData.totalPoints.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               Your lifetime contribution
             </p>
@@ -79,7 +143,7 @@ export default function DashboardPage() {
             <Leaf className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{TREES_PLANTED}</div>
+            <div className="text-2xl font-bold">{userData.totalTrees}</div>
             <p className="text-xs text-muted-foreground">
               Thanks to your points!
             </p>
@@ -87,12 +151,12 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Progress to Next Tree</CardTitle>
+            <CardTitle className="text-sm font-medium">Daily Goal ({dailyTrees}/{DAILY_GOAL} Trees)</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{PROGRESS_TO_NEXT_TREE.toFixed(0)}%</div>
-            <Progress value={PROGRESS_TO_NEXT_TREE} className="mt-2" />
+            <div className="text-2xl font-bold">{progressValue.toFixed(0)}%</div>
+            <Progress value={progressValue} className="mt-2 [&>div]:bg-accent" />
           </CardContent>
         </Card>
       </div>
@@ -109,16 +173,16 @@ export default function DashboardPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
-                <TableHead>Store</TableHead>
+                <TableHead>Location</TableHead>
                 <TableHead className="text-right">Points</TableHead>
                 <TableHead className="text-center">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {MOCK_SUBMISSIONS.map((submission, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{submission.date}</TableCell>
-                  <TableCell>{submission.store}</TableCell>
+              {submissions.map((submission) => (
+                <TableRow key={submission.id}>
+                  <TableCell className="font-medium">{format(submission.date.toDate(), 'PPP')}</TableCell>
+                  <TableCell>{submission.geolocation}</TableCell>
                   <TableCell className="text-right">{submission.points}</TableCell>
                   <TableCell className="text-center">
                     <Badge

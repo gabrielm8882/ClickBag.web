@@ -8,6 +8,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 function AnimatedCounter({ end, duration = 2000, className }: { end: number; duration?: number, className?: string }) {
   const [count, setCount] = useState(0);
@@ -29,8 +31,26 @@ function AnimatedCounter({ end, duration = 2000, className }: { end: number; dur
   return <span className={className}>{count.toLocaleString()}</span>;
 }
 
+interface CommunityStats {
+    totalTreesPlanted: number;
+    totalClickPoints: number;
+}
+
 export default function Home() {
   const { user } = useAuth();
+  const [communityStats, setCommunityStats] = useState<CommunityStats>({ totalTreesPlanted: 0, totalClickPoints: 0 });
+
+  useEffect(() => {
+    const statsDocRef = doc(db, 'community-stats', 'global');
+    const unsubscribe = onSnapshot(statsDocRef, (doc) => {
+      if (doc.exists()) {
+        setCommunityStats(doc.data() as CommunityStats);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const features = [
     {
       icon: <Package className="h-10 w-10 text-accent" />,
@@ -160,12 +180,12 @@ export default function Home() {
                   <Card className="p-8 shadow-lg">
                       <Leaf className="h-12 w-12 text-accent mx-auto mb-4" />
                       <h3 className="font-headline text-2xl font-semibold mb-2">Trees Planted</h3>
-                      <AnimatedCounter end={0} className="font-headline text-5xl md:text-7xl font-bold text-primary" />
+                      <AnimatedCounter end={communityStats.totalTreesPlanted} className="font-headline text-5xl md:text-7xl font-bold text-primary" />
                   </Card>
                   <Card className="p-8 shadow-lg">
                       <Coins className="h-12 w-12 text-accent mx-auto mb-4" />
                       <h3 className="font-headline text-2xl font-semibold mb-2">Total ClickPoints Earned</h3>
-                      <AnimatedCounter end={0} className="font-headline text-5xl md:text-7xl font-bold text-primary" />
+                      <AnimatedCounter end={communityStats.totalClickPoints} className="font-headline text-5xl md:text-7xl font-bold text-primary" />
                   </Card>
               </div>
           </div>
