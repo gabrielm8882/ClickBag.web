@@ -3,13 +3,14 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Leaf, ScanLine, Coins, ArrowRight, Info, User, Zap, Package, Handshake } from 'lucide-react';
+import { Leaf, ScanLine, Coins, ArrowRight, Info, User, Zap, Package, Handshake, Lock } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { cn } from '@/lib/utils';
 
 function AnimatedCounter({ end, duration = 2000, className }: { end: number; duration?: number, className?: string }) {
   const [count, setCount] = useState(0);
@@ -73,6 +74,9 @@ export default function Home() {
       description: 'Your accumulated ClickPoints contribute directly to tree planting projects around the world.',
     },
   ];
+
+  const isTreesLocked = communityStats.totalTreesPlanted < 100;
+  const isPointsLocked = communityStats.totalClickPoints < 1000;
 
   return (
     <div className="flex flex-col">
@@ -179,12 +183,24 @@ export default function Home() {
                 <Card className="p-8 shadow-lg">
                     <Leaf className="h-12 w-12 text-accent mx-auto mb-4" />
                     <h3 className="font-headline text-2xl font-semibold mb-2">Trees Planted</h3>
-                    <AnimatedCounter end={communityStats.totalTreesPlanted} className="font-headline text-5xl md:text-7xl font-bold text-primary" />
+                    <div className="relative">
+                      <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500", isTreesLocked ? 'opacity-100' : 'opacity-0')}>
+                        <div className="absolute inset-0 bg-background/50 backdrop-blur-md"></div>
+                        <Lock className="h-16 w-16 text-accent z-10"/>
+                      </div>
+                      <AnimatedCounter end={communityStats.totalTreesPlanted} className={cn("font-headline text-5xl md:text-7xl font-bold text-primary transition-all duration-500", isTreesLocked ? 'blur-md' : 'blur-none')} />
+                    </div>
                 </Card>
                 <Card className="p-8 shadow-lg">
                     <Coins className="h-12 w-12 text-accent mx-auto mb-4" />
                     <h3 className="font-headline text-2xl font-semibold mb-2">Total ClickPoints Earned</h3>
-                    <AnimatedCounter end={communityStats.totalClickPoints} className="font-headline text-5xl md:text-7xl font-bold text-primary" />
+                    <div className="relative">
+                       <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500", isPointsLocked ? 'opacity-100' : 'opacity-0')}>
+                        <div className="absolute inset-0 bg-background/50 backdrop-blur-md"></div>
+                        <Lock className="h-16 w-16 text-accent z-10"/>
+                      </div>
+                      <AnimatedCounter end={communityStats.totalClickPoints} className={cn("font-headline text-5xl md:text-7xl font-bold text-primary transition-all duration-500", isPointsLocked ? 'blur-md' : 'blur-none')} />
+                    </div>
                 </Card>
             </div>
         </div>
