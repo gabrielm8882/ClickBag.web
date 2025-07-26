@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { LeafLoader } from '@/components/ui/leaf-loader';
 import type { UserData } from '@/hooks/use-auth';
+import { motion } from 'framer-motion';
 
 interface Submission {
   id: string;
@@ -189,12 +190,21 @@ export default function DashboardPage() {
             Your impact dashboard
           </h1>
           {userData.totalPoints > 0 && (
-            <div className="flex items-center gap-2 text-accent bg-accent/10 px-3 py-1 rounded-full">
-              <Crown className="h-5 w-5" />
-              <h2 className="font-headline text-lg font-semibold">
-                ClickBag Contributor
-              </h2>
-            </div>
+             <motion.div
+                className="flex items-center gap-2 text-accent bg-accent/10 px-3 py-1 rounded-full"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+              >
+                <motion.div
+                  whileHover={{ rotate: [-5, 5, -2, 2, 0], filter: 'drop-shadow(0 0 4px hsl(var(--accent)))' }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <Crown className="h-5 w-5" />
+                </motion.div>
+                <h2 className="font-headline text-lg font-semibold">
+                  ClickBag Contributor
+                </h2>
+              </motion.div>
           )}
         </div>
 
