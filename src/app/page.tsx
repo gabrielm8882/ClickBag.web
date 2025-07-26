@@ -56,7 +56,7 @@ export default function Home() {
     {
       icon: <Package className="h-10 w-10 text-accent" />,
       title: 'Get Your ClickBag',
-      description: 'Receive your free bag',
+      description: 'Receive your bag via package, by following us on Instagram (@click_bag_), or get it on the street. Sponsored messages on the bag fund tree planting at no cost to you.',
     },
     {
       icon: <ScanLine className="h-10 w-10 text-accent" />,
