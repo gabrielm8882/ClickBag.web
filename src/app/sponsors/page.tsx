@@ -1,8 +1,11 @@
 
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BadgeDollarSign, Leaf, Move3d, Recycle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
 
 export default function SponsorsPage() {
   const benefits = [
@@ -28,36 +31,86 @@ export default function SponsorsPage() {
     },
   ];
 
+  const FADE_UP_ANIMATION_VARIANTS = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0, transition: { type: 'spring' } },
+  };
+
   return (
     <div className="bg-secondary">
       <div className="container mx-auto px-4 md:px-6 py-20 md:py-24">
         {/* Header Section */}
-        <div className="text-center">
-          <h1 className="font-headline text-4xl md:text-5xl font-bold tracking-tighter text-primary">
+        <motion.div
+          initial="hidden"
+          animate="show"
+          viewport={{ once: true }}
+          variants={{
+            hidden: {},
+            show: {
+              transition: {
+                staggerChildren: 0.15,
+              },
+            },
+          }}
+          className="text-center"
+        >
+          <motion.h1
+            variants={FADE_UP_ANIMATION_VARIANTS}
+            className="font-headline text-4xl md:text-5xl font-bold tracking-tighter text-primary"
+          >
             Partner with ClickBag
-          </h1>
-          <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl mt-4">
+          </motion.h1>
+          <motion.p
+            variants={FADE_UP_ANIMATION_VARIANTS}
+            className="mx-auto max-w-[700px] text-muted-foreground md:text-xl mt-4"
+          >
             Amplify your brand's message, reach a conscious audience, and make a tangible environmental impact.
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
         {/* Benefits Grid */}
-        <div className="grid gap-8 md:grid-cols-1 lg:grid-cols-2 mt-16">
+        <motion.div
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={{
+            hidden: {},
+            show: {
+              transition: {
+                staggerChildren: 0.1,
+              },
+            },
+          }}
+          className="grid gap-8 md:grid-cols-1 lg:grid-cols-2 mt-16"
+        >
           {benefits.map((benefit, index) => (
-            <Card key={index} className="text-center shadow-lg hover:shadow-xl transition-shadow duration-300 border-none bg-background">
-              <CardHeader>
-                <div className="mx-auto bg-accent/10 p-4 rounded-full w-fit">{benefit.icon}</div>
-                <CardTitle className="font-headline mt-4">{benefit.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{benefit.description}</p>
-              </CardContent>
-            </Card>
+            <motion.div
+              key={index}
+              variants={FADE_UP_ANIMATION_VARIANTS}
+              whileHover={{ scale: 1.03 }}
+              transition={{ type: 'spring', stiffness: 300 }}
+            >
+              <Card className="text-center h-full shadow-lg hover:shadow-xl transition-shadow duration-300 border-none bg-background">
+                <CardHeader>
+                  <div className="mx-auto bg-accent/10 p-4 rounded-full w-fit">{benefit.icon}</div>
+                  <CardTitle className="font-headline mt-4">{benefit.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">{benefit.description}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
         
         {/* Call to Action */}
-        <div className="mt-20 text-center">
+        <motion.div
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+          variants={FADE_UP_ANIMATION_VARIANTS}
+          className="mt-20 text-center"
+        >
             <h2 className="font-headline text-3xl md:text-4xl font-bold">Ready to Become a Sponsor?</h2>
              <p className="text-muted-foreground md:text-lg mt-2 mb-8 max-w-2xl mx-auto">
                 Join us in our mission to turn everyday actions into a powerful force for good.
@@ -73,7 +126,7 @@ export default function SponsorsPage() {
                   @click_bag_
                 </a>
             </p>
-        </div>
+        </motion.div>
 
       </div>
     </div>

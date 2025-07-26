@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 function AnimatedCounter({ end, duration = 2000, className }: { end: number; duration?: number, className?: string }) {
   const [count, setCount] = useState(0);
@@ -77,13 +78,34 @@ export default function Home() {
 
   const isTreesLocked = communityStats.totalTreesPlanted < 100;
   const isPointsLocked = communityStats.totalClickPoints < 1000;
+  
+  const FADE_UP_ANIMATION_VARIANTS = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0, transition: { type: 'spring' } },
+  };
 
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
       <section className="w-full py-20 md:py-24 bg-secondary">
-        <div className="container mx-auto px-4 md:px-6 text-center">
-          <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tighter text-primary">
+        <motion.div
+          initial="hidden"
+          animate="show"
+          viewport={{ once: true }}
+          variants={{
+            hidden: {},
+            show: {
+              transition: {
+                staggerChildren: 0.15,
+              },
+            },
+          }}
+          className="container mx-auto px-4 md:px-6 text-center"
+        >
+          <motion.h1
+            variants={FADE_UP_ANIMATION_VARIANTS}
+            className="font-headline text-4xl md:text-6xl font-bold tracking-tighter text-primary"
+          >
             Turn your{' '}
             <span className="font-cursive text-[2.5rem] md:text-[4.3rem] text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
               purchases
@@ -92,47 +114,92 @@ export default function Home() {
             <span className="font-cursive text-[2.5rem] md:text-[4.3rem] text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
               trees
             </span>
-          </h1>
-          <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl mt-4">
+          </motion.h1>
+          <motion.p
+            variants={FADE_UP_ANIMATION_VARIANTS}
+            className="mx-auto max-w-[700px] text-muted-foreground md:text-xl mt-4"
+          >
             What if you could reforest the earth without spending time, laying a dime or moving a muscle?
-          </p>
-          <div className="mt-8">
+          </motion.p>
+          <motion.div
+            variants={FADE_UP_ANIMATION_VARIANTS}
+            className="mt-8"
+          >
             <Link href="/register">
               <Button size="lg" className="shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow">
                 Get Started <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* How It Works Section */}
       <section id="how-it-works" className="w-full py-16 md:py-20 bg-secondary">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            variants={FADE_UP_ANIMATION_VARIANTS}
+            className="text-center"
+          >
             <h2 className="font-headline text-3xl md:text-4xl font-bold">Simple Steps to a Greener World</h2>
             <p className="text-muted-foreground md:text-lg mt-2">Making an impact has never been easier.</p>
-          </div>
-          <div className="grid gap-8 md:grid-cols-1 lg:grid-cols-4 mt-12">
+          </motion.div>
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={{
+                hidden: {},
+                show: {
+                transition: {
+                    staggerChildren: 0.15,
+                },
+                },
+            }}
+            className="grid gap-8 md:grid-cols-1 lg:grid-cols-4 mt-12"
+          >
             {features.map((feature, index) => (
-              <Card key={index} className="text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <CardHeader>
-                  <div className="mx-auto bg-accent/10 p-4 rounded-full w-fit">{feature.icon}</div>
-                  <CardTitle className="font-headline mt-4">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">{feature.description}</p>
-                </CardContent>
-              </Card>
+              <motion.div
+                key={index}
+                variants={FADE_UP_ANIMATION_VARIANTS}
+                whileHover={{ scale: 1.03 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+              >
+                <Card className="text-center h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <CardHeader>
+                    <div className="mx-auto bg-accent/10 p-4 rounded-full w-fit">{feature.icon}</div>
+                    <CardTitle className="font-headline mt-4">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">{feature.description}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Mission and Sponsors Section */}
       <section className="w-full py-16 md:py-20">
-        <div className="container mx-auto grid md:grid-cols-2 gap-12 px-4 md:px-6 items-center">
-          <div>
+        <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.3 }}
+            variants={{
+                hidden: {},
+                show: {
+                    transition: {
+                        staggerChildren: 0.2,
+                    },
+                },
+            }}
+            className="container mx-auto grid md:grid-cols-2 gap-12 px-4 md:px-6 items-center"
+        >
+          <motion.div variants={FADE_UP_ANIMATION_VARIANTS}>
             <h2 className="font-headline text-3xl md:text-4xl font-bold">Our Mission & Our Sponsors</h2>
             <p className="text-muted-foreground mt-4">
               At ClickBag, we believe that small actions can lead to massive change. Our mission is to transform
@@ -158,8 +225,8 @@ export default function Home() {
                     <p className="text-muted-foreground">This project was built by a 16-year-old from Spain with a passion for our planet.</p>
                 </div>
             </div>
-          </div>
-          <div>
+          </motion.div>
+          <motion.div variants={FADE_UP_ANIMATION_VARIANTS}>
             <Image
               src="https://placehold.co/600x400.png"
               alt="Sponsored ClickBag"
@@ -168,47 +235,76 @@ export default function Home() {
               className="rounded-lg shadow-lg"
               data-ai-hint="shopping bag"
             />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
       
       {/* Aggregate Progress Display */}
       <section className="w-full py-16 md:py-24 bg-secondary">
-        <div className="container mx-auto px-4 md:px-6 text-center">
+        <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            variants={FADE_UP_ANIMATION_VARIANTS}
+            className="container mx-auto px-4 md:px-6 text-center"
+        >
             <h2 className="font-headline text-3xl md:text-4xl font-bold">Our Collective Impact</h2>
             <p className="text-muted-foreground md:text-lg mt-2 mb-8">
               See what our community has achieved together.
             </p>
-            <div className="grid gap-8 md:grid-cols-2">
-                <Card className="p-8 shadow-lg">
-                    <Leaf className="h-12 w-12 text-accent mx-auto mb-4" />
-                    <h3 className="font-headline text-2xl font-semibold mb-2">Trees Planted</h3>
-                    <div className="relative">
-                      <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500", isTreesLocked ? 'opacity-100' : 'opacity-0')}>
-                        <div className="absolute inset-0 bg-background/50 backdrop-blur-md"></div>
-                        <Lock className="h-10 w-10 text-accent z-10 rotate-[-15deg] [filter:drop-shadow(0_0_6px_hsl(var(--accent)))]"/>
-                      </div>
-                      <AnimatedCounter end={communityStats.totalTreesPlanted} className={cn("font-headline text-5xl md:text-7xl font-bold text-primary transition-all duration-500", isTreesLocked ? 'blur-xl' : 'blur-none')} />
-                    </div>
-                </Card>
-                <Card className="p-8 shadow-lg">
-                    <Coins className="h-12 w-12 text-accent mx-auto mb-4" />
-                    <h3 className="font-headline text-2xl font-semibold mb-2">Total ClickPoints Earned</h3>
-                    <div className="relative">
-                       <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500", isPointsLocked ? 'opacity-100' : 'opacity-0')}>
-                        <div className="absolute inset-0 bg-background/50 backdrop-blur-md"></div>
-                        <Lock className="h-10 w-10 text-accent z-10 rotate-[-15deg] [filter:drop-shadow(0_0_6px_hsl(var(--accent)))]"/>
-                      </div>
-                      <AnimatedCounter end={communityStats.totalClickPoints} className={cn("font-headline text-5xl md:text-7xl font-bold text-primary transition-all duration-500", isPointsLocked ? 'blur-xl' : 'blur-none')} />
-                    </div>
-                </Card>
-            </div>
-        </div>
+            <motion.div
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.2 }}
+                variants={{
+                    hidden: {},
+                    show: {
+                        transition: {
+                            staggerChildren: 0.15,
+                        },
+                    },
+                }}
+                className="grid gap-8 md:grid-cols-2"
+            >
+                <motion.div variants={FADE_UP_ANIMATION_VARIANTS}>
+                    <Card className="p-8 shadow-lg">
+                        <Leaf className="h-12 w-12 text-accent mx-auto mb-4" />
+                        <h3 className="font-headline text-2xl font-semibold mb-2">Trees Planted</h3>
+                        <div className="relative">
+                          <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500", isTreesLocked ? 'opacity-100' : 'opacity-0')}>
+                            <div className="absolute inset-0 bg-background/50 backdrop-blur-md"></div>
+                            <Lock className="h-10 w-10 text-accent z-10 rotate-[-15deg] [filter:drop-shadow(0_0_6px_hsl(var(--accent)))]"/>
+                          </div>
+                          <AnimatedCounter end={communityStats.totalTreesPlanted} className={cn("font-headline text-5xl md:text-7xl font-bold text-primary transition-all duration-500", isTreesLocked ? 'blur-xl' : 'blur-none')} />
+                        </div>
+                    </Card>
+                </motion.div>
+                <motion.div variants={FADE_UP_ANIMATION_VARIANTS}>
+                    <Card className="p-8 shadow-lg">
+                        <Coins className="h-12 w-12 text-accent mx-auto mb-4" />
+                        <h3 className="font-headline text-2xl font-semibold mb-2">Total ClickPoints Earned</h3>
+                        <div className="relative">
+                           <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500", isPointsLocked ? 'opacity-100' : 'opacity-0')}>
+                            <div className="absolute inset-0 bg-background/50 backdrop-blur-md"></div>
+                            <Lock className="h-10 w-10 text-accent z-10 rotate-[-15deg] [filter:drop-shadow(0_0_6px_hsl(var(--accent)))]"/>
+                          </div>
+                          <AnimatedCounter end={communityStats.totalClickPoints} className={cn("font-headline text-5xl md:text-7xl font-bold text-primary transition-all duration-500", isPointsLocked ? 'blur-xl' : 'blur-none')} />
+                        </div>
+                    </Card>
+                </motion.div>
+            </motion.div>
+        </motion.div>
       </section>
 
       {/* Join Project Section */}
       <section className="w-full py-16">
-        <div className="container mx-auto px-4 md:px-6 text-center">
+        <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            variants={FADE_UP_ANIMATION_VARIANTS}
+            className="container mx-auto px-4 md:px-6 text-center"
+        >
           <h2 className="font-headline text-3xl md:text-4xl font-bold">Ready to Make an Impact?</h2>
           <p className="text-muted-foreground md:text-lg mt-2 mb-8">
             Become a part of the ClickBag community and start turning your actions into a greener planet.
@@ -218,12 +314,18 @@ export default function Home() {
               Join our project now <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
-        </div>
+        </motion.div>
       </section>
 
       {/* Sponsors Section */}
       <section id="sponsors" className="w-full py-16 md:py-20 bg-secondary">
-        <div className="container mx-auto px-4 md:px-6 text-center">
+        <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            variants={FADE_UP_ANIMATION_VARIANTS}
+            className="container mx-auto px-4 md:px-6 text-center"
+        >
           <Handshake className="h-12 w-12 text-accent mx-auto mb-4" />
           <h2 className="font-headline text-3xl md:text-4xl font-bold">Are You a Sponsor?</h2>
           <p className="text-muted-foreground md:text-lg mt-2 mb-8 max-w-2xl mx-auto">
@@ -247,7 +349,7 @@ export default function Home() {
               </a>
             </p>
           </div>
-        </div>
+        </motion.div>
       </section>
     </div>
   );
