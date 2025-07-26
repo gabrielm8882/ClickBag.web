@@ -52,7 +52,6 @@ function AnimatedCounter({ endValue }: { endValue: number }) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    setCount(0); // Reset to 0 to re-trigger animation on every load
     let startTime: number;
     const duration = 1500; // ms
 
@@ -68,8 +67,13 @@ function AnimatedCounter({ endValue }: { endValue: number }) {
         setCount(endValue);
       }
     };
+    
+    // Always start the animation when the component mounts or endValue changes.
+    const animationFrame = requestAnimationFrame(step);
 
-    requestAnimationFrame(step);
+    return () => {
+      cancelAnimationFrame(animationFrame);
+    };
   }, [endValue]);
 
   return <>{count.toLocaleString()}</>;
@@ -102,6 +106,24 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user) {
       setPageLoading(true);
+
+      // --- Simulation Code ---
+      // This part is for testing purposes to show the progress bar animation.
+      setDailyTrees(1);
+      const testSubmission: Submission = {
+        id: 'test-submission-id',
+        date: Timestamp.now(),
+        geolocation: 'Test City, Test Country',
+        points: 10,
+        status: 'Approved',
+      };
+      setSubmissions([testSubmission]);
+      setPageLoading(false);
+      // --- End Simulation Code ---
+
+
+      /*
+      // --- Original Firestore Code ---
       const today = new Date();
       const startOfToday = startOfDay(today);
       const endOfToday = endOfDay(today);
@@ -134,6 +156,8 @@ export default function DashboardPage() {
       return () => {
         unsubscribeSubmissions();
       };
+      // --- End Original Firestore Code ---
+      */
     }
   }, [user]);
 
@@ -144,7 +168,7 @@ export default function DashboardPage() {
     // Use a short timeout to allow the reset to 0 to be painted first
     const animationTimeout = setTimeout(() => setProgressValue(newProgress), 100);
     return () => clearTimeout(animationTimeout);
-  }, [dailyTrees, userData]); // Re-run if dailyTrees or userData changes
+  }, [dailyTrees]);
 
   const handleClosePrivacyNotice = () => {
     setShowPrivacyNotice(false);
@@ -193,7 +217,7 @@ export default function DashboardPage() {
                 whileHover={{ scale: 1.03, transition: { duration: 0.2, ease: 'easeInOut' } }}
               >
                 <motion.div
-                  whileHover={{ rotate: -8, scale: 1.2, filter: 'drop-shadow(0 0 6px hsl(var(--accent) / 0.7))', transition: { duration: 0.1, ease: 'easeInOut' } }}
+                  whileHover={{ rotate: [-8, 5, -5, 2, 0], filter: 'drop-shadow(0 0 4px hsl(var(--accent) / 0.6))', transition: { duration: 0.4, ease: 'easeInOut' } }}
                 >
                   <Crown className="h-5 w-5" />
                 </motion.div>
