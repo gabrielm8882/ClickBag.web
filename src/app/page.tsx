@@ -257,7 +257,7 @@ export default function Home() {
                         <h3 className="font-headline text-2xl font-semibold mb-2">Trees planted</h3>
                         <div className="relative">
                           <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500", isTreesLocked ? 'opacity-100' : 'opacity-0')}>
-                            <div className="absolute inset-0 bg-background/50 backdrop-blur-md"></div>
+                            <div className="absolute inset-0 bg-white/30 dark:bg-black/30 backdrop-blur-md"></div>
                             <Lock className="h-10 w-10 text-accent z-10 rotate-[-15deg] [filter:drop-shadow(0_0_6px_hsl(var(--accent)))]"/>
                           </div>
                           <AnimatedCounter end={communityStats.totalTreesPlanted} className={cn("font-headline text-5xl md:text-7xl font-bold text-primary transition-all duration-500", isTreesLocked ? 'blur-xl' : 'blur-none')} />
@@ -270,7 +270,7 @@ export default function Home() {
                         <h3 className="font-headline text-2xl font-semibold mb-2">Total ClickPoints earned</h3>
                         <div className="relative">
                            <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity duration-500", isPointsLocked ? 'opacity-100' : 'opacity-0')}>
-                            <div className="absolute inset-0 bg-background/50 backdrop-blur-md"></div>
+                            <div className="absolute inset-0 bg-white/30 dark:bg-black/30 backdrop-blur-md"></div>
                             <Lock className="h-10 w-10 text-accent z-10 rotate-[-15deg] [filter:drop-shadow(0_0_6px_hsl(var(--accent)))]"/>
                           </div>
                           <AnimatedCounter end={communityStats.totalClickPoints} className={cn("font-headline text-5xl md:text-7xl font-bold text-primary transition-all duration-500", isPointsLocked ? 'blur-xl' : 'blur-none')} />
