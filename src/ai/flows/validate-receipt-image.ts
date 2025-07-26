@@ -12,9 +12,11 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { determineGeolocation } from './determine-geolocation';
-import { auth, db } from '@/lib/firebase';
-import { doc, runTransaction, serverTimestamp, collection, addDoc, Timestamp } from 'firebase/firestore';
-import {getAuth} from 'firebase-admin/auth';
+import { db } from '@/lib/firebase';
+import { doc, runTransaction, Timestamp, collection, addDoc } from 'firebase/firestore';
+import {FlowAuth} from 'genkit/flow';
+import {getAuth} from 'firebase/auth';
+import { headers } from 'next/headers';
 
 
 const POINTS_PER_TREE = 10;
@@ -102,8 +104,10 @@ const validateReceiptImageFlow = ai.defineFlow(
     name: 'validateReceiptImageFlow',
     inputSchema: ValidateReceiptImageInputSchema,
     outputSchema: ValidateReceiptImageOutputSchema,
-    auth: {
-      required: true,
+    auth: (auth) => { // This is the fix. We manually verify the user.
+        if (!auth) {
+            throw new Error('User not authenticated.');
+        }
     }
   },
   async (input, context) => {
