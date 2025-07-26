@@ -49,13 +49,13 @@ const BagToTreeAnimation = () => {
     };
   
     return (
-      <div ref={ref} className="relative w-full h-[400px] flex items-center justify-center bg-secondary rounded-lg shadow-lg overflow-hidden">
+      <div ref={ref} className="relative w-full h-[300px] flex items-center justify-center bg-secondary rounded-lg shadow-lg overflow-hidden">
         <motion.div
           animate={{ opacity: isInView ? 0 : 1, scale: isInView ? 0.2 : 1, rotate: isInView ? 180 : 0 }}
           transition={{ duration: 0.8, ease: 'easeInOut' }}
           className="absolute"
         >
-          <ShoppingBag className="h-32 w-32 text-primary" />
+          <ShoppingBag className="h-24 w-24 md:h-28 md:w-28 text-primary" />
         </motion.div>
         <motion.div
           initial="hidden"
@@ -63,7 +63,7 @@ const BagToTreeAnimation = () => {
           variants={variants}
           className="absolute"
         >
-          <Leaf className="h-40 w-40 text-accent" />
+          <Leaf className="h-28 w-28 md:h-32 md:w-32 text-accent" />
         </motion.div>
       </div>
     );
@@ -378,5 +378,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
