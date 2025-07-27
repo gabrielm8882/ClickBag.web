@@ -32,71 +32,69 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // This effect handles the result of a sign-in operation that uses a redirect flow.
-    // getRedirectResult is called on every page load to check if the user is returning
-    // from a successful sign-in with a provider like Google.
-    const handleRedirectResult = async () => {
+    const checkAuth = async () => {
       try {
+        // First, check for the result of a redirect sign-in.
+        // This is the highest priority check for authentication on page load.
         const result = await getRedirectResult(auth);
-        // If 'result' is not null, the user has successfully signed in via redirect.
         if (result) {
+          // If a result is found, a user has successfully signed in via redirect.
           const additionalInfo = getAdditionalUserInfo(result);
-           if (additionalInfo?.isNewUser) {
+          if (additionalInfo?.isNewUser) {
             sessionStorage.setItem('isNewUser', 'true');
           }
           toast({
             title: additionalInfo?.isNewUser ? "Account created" : "Login successful",
             description: additionalInfo?.isNewUser ? "Welcome to ClickBag!" : "Welcome back!",
           });
-          // The onAuthStateChanged listener below will handle setting the user state.
-          // We don't need to manually push to the dashboard here, as the router logic
-          // in components will handle it based on the updated auth state.
+          // The onAuthStateChanged listener below will now correctly handle the authenticated user.
         }
       } catch (error: any) {
-        // Handle potential errors, e.g., if the user cancels the flow.
+        // Handle potential errors during redirect result retrieval.
         console.error("Error handling redirect result:", error);
-         toast({
+        toast({
           variant: 'destructive',
           title: 'Sign-in failed',
           description: error.message,
         });
-      } finally {
-        // This is a good place to stop a global loading indicator if you have one
-        // specifically for the redirect operation.
       }
+
+      // After handling the redirect, set up the onAuthStateChanged listener.
+      // This will now correctly reflect the user's state, whether they just
+      // signed in via redirect or were already logged in.
+      const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+        if (!currentUser) {
+          // If user logs out or is not logged in, clear data and finish loading.
+          setUserData(null);
+          setLoading(false);
+        }
+      });
+
+      // The function returned by onAuthStateChanged is the unsubscribe function.
+      // We return it so it can be called when the component unmounts.
+      return unsubscribeAuth;
     };
 
-    handleRedirectResult();
+    checkAuth();
   }, [toast]);
 
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      if (!user) {
-        // If user logs out, clear user data and stop loading
-        setUserData(null);
-        setLoading(false);
-      }
-    });
-
-    return () => unsubscribeAuth();
-  }, []);
-
-  useEffect(() => {
     if (user) {
-      // If user is logged in, listen for user data changes
+      // If user is logged in, listen for user data changes from Firestore.
       const userDocRef = doc(db, 'users', user.uid);
       const unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
         if (doc.exists()) {
           setUserData(doc.data() as UserData);
         } else {
-          // If user doc doesn't exist, set to default
+          // If user doc doesn't exist (e.g., brand new user), set to default.
           setUserData({ totalPoints: 0, totalTrees: 0 });
         }
+        // Finish loading now that we have both auth and user data.
         setLoading(false);
       });
-       return () => unsubscribeFirestore();
+      return () => unsubscribeFirestore();
     }
   }, [user]);
 
