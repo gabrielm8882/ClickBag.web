@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -82,6 +82,8 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
+      // First, attempt to sign in with a popup.
+      // This is a better user experience as it doesn't require a full page redirect.
       await signInWithPopup(auth, provider);
       toast({
         title: "Login successful",
@@ -89,11 +91,33 @@ export default function LoginPage() {
       });
       router.push('/dashboard');
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Google sign-in failed',
-        description: error.message,
-      });
+      // The try...catch block is used to handle potential errors during the sign-in process.
+      // If signInWithPopup fails, we can inspect the error and decide on a fallback action.
+      if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+        // This specific error occurs when the popup is closed by the user or, more often,
+        // blocked by the browser's security policies (e.g., popup blockers, cross-origin policies).
+        // To ensure the user can still sign in, we fall back to signInWithRedirect.
+        // This method navigates the user to the Google sign-in page and then redirects them back,
+        // which is more robust against popup blockers.
+        try {
+          await signInWithRedirect(auth, provider);
+          // No navigation or toast is needed here, as the page will redirect away and then
+          // the AuthProvider will handle the successful sign-in when the user returns.
+        } catch (redirectError: any) {
+           toast({
+            variant: 'destructive',
+            title: 'Google sign-in failed',
+            description: redirectError.message,
+          });
+        }
+      } else {
+         // Handle other potential errors, such as network issues or problems with the Google account.
+        toast({
+          variant: 'destructive',
+          title: 'Google sign-in failed',
+          description: error.message,
+        });
+      }
     } finally {
       setIsGoogleLoading(false);
     }
