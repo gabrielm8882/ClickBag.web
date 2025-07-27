@@ -12,7 +12,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { db } from '@/lib/firebase';
-import { doc, runTransaction, Timestamp, collection, addDoc, getDocs, query, where, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, Timestamp, collection, addDoc, getDocs, query, where, writeBatch } from 'firebase/firestore';
 import * as crypto from 'crypto';
 import sharp from 'sharp';
 
@@ -166,11 +166,8 @@ const validateReceiptImageFlow = ai.defineFlow(
             const userDocRef = doc(db, 'users', uid);
             const communityStatsRef = doc(db, 'community-stats', 'global');
             
-            // We need to read the documents first, outside the batch.
-            // Note: In a high-concurrency app, we'd use a transaction for this read-modify-write part.
-            // For this app's scale, reading then batch writing is acceptable.
-            const userDoc = await doc(userDocRef.path, (db as any)).get();
-            const communityStatsDoc = await doc(communityStatsRef.path, (db as any)).get();
+            const userDoc = await getDoc(userDocRef);
+            const communityStatsDoc = await getDoc(communityStatsRef);
 
             // Update user stats
             const newTotalPoints = (userDoc.data()?.totalPoints || 0) + output.clickPoints;
