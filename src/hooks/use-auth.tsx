@@ -32,19 +32,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      setLoading(true);
+    // This function will handle both redirect results and ongoing auth state.
+    const checkAuthAndHandleRedirect = async () => {
       try {
+        // Check for redirect result first. This runs once on page load.
         const result = await getRedirectResult(auth);
         if (result) {
+          // User has successfully signed in or signed up via redirect.
           const additionalInfo = getAdditionalUserInfo(result);
           if (additionalInfo?.isNewUser) {
+            // This flag helps us show a welcome message or onboarding.
             sessionStorage.setItem('isNewUser', 'true');
           }
           toast({
             title: additionalInfo?.isNewUser ? "Account created" : "Login successful",
             description: additionalInfo?.isNewUser ? "Welcome to ClickBag!" : "Welcome back!",
           });
+          // onAuthStateChanged will handle setting the user state.
         }
       } catch (error: any) {
         console.error("Error handling redirect result:", error);
@@ -55,30 +59,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
       }
 
+      // Set up the onAuthStateChanged listener.
+      // This is the single source of truth for the user's sign-in state.
       const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
         setUser(currentUser);
+        // If there's no user, we know they are logged out. Stop loading.
         if (!currentUser) {
           setUserData(null);
           setLoading(false);
         }
+        // If there is a user, we will wait for their data to load in the next effect.
       });
-      
+
       return unsubscribeAuth;
     };
 
-    checkAuth();
+    checkAuthAndHandleRedirect();
   }, [toast]);
 
 
   useEffect(() => {
+    // This effect runs when the user object changes.
     if (user) {
+      // User is authenticated, now fetch their app-specific data.
       const userDocRef = doc(db, 'users', user.uid);
       const unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
         if (doc.exists()) {
           setUserData(doc.data() as UserData);
         } else {
+          // If the user doc doesn't exist, create it with default values.
           setUserData({ totalPoints: 0, totalTrees: 0 });
         }
+        // Once user data is loaded, we can stop the main loading screen.
         setLoading(false);
       });
       return () => unsubscribeFirestore();
