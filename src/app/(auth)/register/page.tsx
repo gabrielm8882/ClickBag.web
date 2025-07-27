@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signInWithPopup, signInWithRedirect, GoogleAuthProvider, getAdditionalUserInfo } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signInWithRedirect, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -79,50 +79,18 @@ export default function RegisterPage() {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      // First, attempt to sign in with a popup.
-      // This is a better user experience as it doesn't require a full page redirect.
-      const result = await signInWithPopup(auth, provider);
-      const additionalInfo = getAdditionalUserInfo(result);
-      
-      if (additionalInfo?.isNewUser) {
-        sessionStorage.setItem('isNewUser', 'true');
-      }
-      
-      toast({
-        title: additionalInfo?.isNewUser ? "Account created" : "Login successful",
-        description: additionalInfo?.isNewUser ? "Welcome to ClickBag!" : "Welcome back!",
-      });
-
-      router.push('/dashboard');
+      // Use signInWithRedirect as the sole method for Google sign-in to improve reliability.
+      // This avoids issues with popup blockers and various browser security policies.
+      await signInWithRedirect(auth, provider);
+      // The user will be redirected to the Google sign-in page.
+      // The result is handled by the getRedirectResult() logic in the AuthProvider.
     } catch (error: any) {
-       // The try...catch block is used to handle potential errors during the sign-in process.
-       // If signInWithPopup fails, we can inspect the error and decide on a fallback action.
-      if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
-        // This specific error occurs when the popup is closed by the user or, more often,
-        // blocked by the browser's security policies (e.g., popup blockers, cross-origin policies).
-        // To ensure the user can still sign in, we fall back to signInWithRedirect.
-        // This method navigates the user to the Google sign-in page and then redirects them back,
-        // which is more robust against popup blockers.
-        try {
-          await signInWithRedirect(auth, provider);
-          // No navigation or toast is needed here, as the page will redirect away and then
-          // the AuthProvider will handle the successful sign-in when the user returns.
-        } catch (redirectError: any) {
-          toast({
-            variant: 'destructive',
-            title: 'Google sign-up failed',
-            description: redirectError.message,
-          });
-        }
-      } else {
-        // Handle other potential errors, such as network issues or problems with the Google account.
-        toast({
-          variant: 'destructive',
-          title: 'Google sign-up failed',
-          description: error.message,
-        });
-      }
-    } finally {
+      // This catch block will handle any errors that occur during the redirect initiation.
+      toast({
+        variant: 'destructive',
+        title: 'Google sign-up failed',
+        description: error.message,
+      });
       setIsGoogleLoading(false);
     }
   };
