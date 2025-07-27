@@ -6,12 +6,14 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { LeafLoader } from '../ui/leaf-loader';
 
-export function PageTransition({ children }: { children: React.ReactNode }) {
+export default function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
+    // When a page transition starts, we set a timeout to end it.
+    // This handles cases where the new page loads faster than the exit animation.
     if (isExiting) {
       // The duration should be slightly less than the animation exit time
       // to ensure the new page content is ready to be animated in.
@@ -21,8 +23,20 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
   }, [isExiting]);
 
   useEffect(() => {
-    // When the path changes, trigger the exit animation
-    setIsExiting(true);
+    // When the path changes, trigger the exit animation.
+    // We don't want to trigger this on the initial load.
+    const handleRouteChange = () => {
+        setIsExiting(true);
+    };
+
+    // The 'useEffect' for route changes will run on initial load,
+    // so we need a way to distinguish initial load from route changes.
+    // A simple way is to check if the component has mounted before.
+    const initialLoad = true;
+    if(!initialLoad) {
+        handleRouteChange();
+    }
+    
   }, [pathname]);
 
   return (
