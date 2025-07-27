@@ -6,7 +6,7 @@ import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/hooks/use-auth';
-import { PageTransition } from '@/components/layout/page-transition';
+import PageTransition from '@/components/layout/page-transition';
 
 export const metadata: Metadata = {
   title: 'ClickBag',
