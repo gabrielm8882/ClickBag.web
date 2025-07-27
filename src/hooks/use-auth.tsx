@@ -33,12 +33,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
+      setLoading(true);
       try {
-        // First, check for the result of a redirect sign-in.
-        // This is the highest priority check for authentication on page load.
         const result = await getRedirectResult(auth);
         if (result) {
-          // If a result is found, a user has successfully signed in via redirect.
           const additionalInfo = getAdditionalUserInfo(result);
           if (additionalInfo?.isNewUser) {
             sessionStorage.setItem('isNewUser', 'true');
@@ -47,10 +45,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: additionalInfo?.isNewUser ? "Account created" : "Login successful",
             description: additionalInfo?.isNewUser ? "Welcome to ClickBag!" : "Welcome back!",
           });
-          // The onAuthStateChanged listener below will now correctly handle the authenticated user.
         }
       } catch (error: any) {
-        // Handle potential errors during redirect result retrieval.
         console.error("Error handling redirect result:", error);
         toast({
           variant: 'destructive',
@@ -59,20 +55,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
       }
 
-      // After handling the redirect, set up the onAuthStateChanged listener.
-      // This will now correctly reflect the user's state, whether they just
-      // signed in via redirect or were already logged in.
       const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
         setUser(currentUser);
         if (!currentUser) {
-          // If user logs out or is not logged in, clear data and finish loading.
           setUserData(null);
           setLoading(false);
         }
       });
-
-      // The function returned by onAuthStateChanged is the unsubscribe function.
-      // We return it so it can be called when the component unmounts.
+      
       return unsubscribeAuth;
     };
 
@@ -82,16 +72,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (user) {
-      // If user is logged in, listen for user data changes from Firestore.
       const userDocRef = doc(db, 'users', user.uid);
       const unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
         if (doc.exists()) {
           setUserData(doc.data() as UserData);
         } else {
-          // If user doc doesn't exist (e.g., brand new user), set to default.
           setUserData({ totalPoints: 0, totalTrees: 0 });
         }
-        // Finish loading now that we have both auth and user data.
         setLoading(false);
       });
       return () => unsubscribeFirestore();
