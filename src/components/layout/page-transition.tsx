@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { LeafLoader } from '../ui/leaf-loader';
 import React, { useState, useEffect, useRef } from 'react';
 
-const PageTransition = ({ children }: { children: React.ReactNode }) => {
+export function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isExiting, setIsExiting] = useState(false);
   const previousPathname = useRef(pathname);
@@ -49,5 +49,3 @@ const PageTransition = ({ children }: { children: React.ReactNode }) => {
     </AnimatePresence>
   );
 };
-
-export default PageTransition;
