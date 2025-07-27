@@ -3,44 +3,27 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
 import { LeafLoader } from '../ui/leaf-loader';
+import React, { useState, useEffect, useRef } from 'react';
 
-export default function PageTransition({ children }: { children: React.ReactNode }) {
+const PageTransition = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const [isExiting, setIsExiting] = useState(false);
+  const previousPathname = useRef(pathname);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    // When a page transition starts, we set a timeout to end it.
-    // This handles cases where the new page loads faster than the exit animation.
-    if (isExiting) {
-      // The duration should be slightly less than the animation exit time
-      // to ensure the new page content is ready to be animated in.
-      timer = setTimeout(() => setIsExiting(false), 250); 
+    if (previousPathname.current !== pathname) {
+      setIsExiting(true);
+      previousPathname.current = pathname;
+      const timer = setTimeout(() => {
+        setIsExiting(false);
+      }, 400); 
+      return () => clearTimeout(timer);
     }
-    return () => clearTimeout(timer);
-  }, [isExiting]);
-
-  useEffect(() => {
-    // When the path changes, trigger the exit animation.
-    // We don't want to trigger this on the initial load.
-    const handleRouteChange = () => {
-        setIsExiting(true);
-    };
-
-    // The 'useEffect' for route changes will run on initial load,
-    // so we need a way to distinguish initial load from route changes.
-    // A simple way is to check if the component has mounted before.
-    const initialLoad = true;
-    if(!initialLoad) {
-        handleRouteChange();
-    }
-    
   }, [pathname]);
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="wait" initial={false}>
       {isExiting ? (
         <motion.div
           key="loader"
@@ -57,6 +40,7 @@ export default function PageTransition({ children }: { children: React.ReactNode
           key={pathname}
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -5 }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
         >
           {children}
@@ -65,3 +49,5 @@ export default function PageTransition({ children }: { children: React.ReactNode
     </AnimatePresence>
   );
 };
+
+export default PageTransition;
