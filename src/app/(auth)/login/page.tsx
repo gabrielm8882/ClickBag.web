@@ -7,8 +7,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signInWithEmailAndPassword, signInWithRedirect, GoogleAuthProvider } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -68,7 +69,40 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
-    await signInWithRedirect(auth, provider);
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      const additionalInfo = getAdditionalUserInfo(result);
+
+      if (additionalInfo?.isNewUser) {
+        // This is a new user, create a document for them in Firestore.
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { totalPoints: 0, totalTrees: 0, displayName: user.displayName, email: user.email });
+      }
+
+      toast({
+        title: "✅ Login Successful",
+        description: `Welcome back, ${user.displayName}!`,
+      });
+      router.push('/dashboard');
+
+    } catch (error: any) {
+      if (error.code === 'auth/popup-closed-by-user') {
+        toast({
+          variant: 'destructive',
+          title: 'Sign-in Canceled',
+          description: 'The sign-in popup was closed before completing.',
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Login failed',
+          description: error.message,
+        });
+      }
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   return (

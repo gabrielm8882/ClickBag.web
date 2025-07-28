@@ -2,11 +2,10 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User, getRedirectResult, getAdditionalUserInfo } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { LeafLoader } from '@/components/ui/leaf-loader';
-import { useToast } from './use-toast';
 
 export interface UserData {
   totalPoints: number;
@@ -29,68 +28,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    // onAuthStateChanged is the recommended way to get the current user.
+    // It listens for changes in authentication state and handles session persistence automatically.
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         // User is signed in.
         setUser(user);
+        // Now, listen for changes to this user's data in Firestore.
         const userDocRef = doc(db, 'users', user.uid);
         const unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
           if (doc.exists()) {
             setUserData(doc.data() as UserData);
           }
+          // Set loading to false only after we have user and their data.
           setLoading(false);
         });
+        // Return the firestore unsubscribe function to clean up the listener.
         return unsubscribeFirestore;
       } else {
-        // User is signed out. Check for redirect result.
-        try {
-          const result = await getRedirectResult(auth);
-          if (result) {
-            // This is the signed-in user from the redirect.
-            const user = result.user;
-            const additionalInfo = getAdditionalUserInfo(result);
-            
-            toast({
-                title: "✅ Login Successful",
-                description: `Welcome to ClickBag, ${user.displayName}!`,
-            });
-            
-            if (additionalInfo?.isNewUser) {
-              // Create a new user document in Firestore.
-              const userDocRef = doc(db, 'users', user.uid);
-              const docSnap = await getDoc(userDocRef);
-              if (!docSnap.exists()) {
-                await setDoc(userDocRef, { totalPoints: 0, totalTrees: 0 });
-              }
-              sessionStorage.setItem('isNewUser', 'true');
-            }
-            // The onAuthStateChanged observer will fire again with the user object,
-            // so we don't need to call setUser or setLoading here.
-          } else {
-            // No user and no redirect result, so they are truly logged out.
-            setUser(null);
-            setUserData(null);
-            setLoading(false);
-          }
-        } catch (error: any) {
-          console.error("Auth Error:", error);
-          toast({
-            variant: "destructive",
-            title: "Authentication Error",
-            description: "Could not complete the sign-in process. Please try again.",
-          });
-          setUser(null);
-          setUserData(null);
-          setLoading(false);
-        }
+        // User is signed out.
+        setUser(null);
+        setUserData(null);
+        setLoading(false);
       }
     });
 
+    // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, [toast]);
+  }, []);
 
   if (loading) {
     return (
@@ -102,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading: false }}>
+    <AuthContext.Provider value={{ user, userData, loading }}>
       {children}
     </AuthContext.Provider>
   );
