@@ -1,7 +1,10 @@
+
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
+// This configuration is for your Firebase project.
+// The authDomain is the default domain for your project's Firebase Hosting.
 const firebaseConfig = {
   apiKey: "AIzaSyCw411oL8AA1WkFucgL-MFXFWaJvFmj3ww",
   authDomain: "clickbag.firebaseapp.com",
