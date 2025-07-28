@@ -7,8 +7,6 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Leaf, LogOut, User as UserIcon, Menu, Crown } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,13 +21,13 @@ import { cn } from '@/lib/utils';
 
 
 export function Header() {
-  const { user, userData } = useAuth();
+  const { user, userData, signOut } = useAuth();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
+      await signOut();
       router.push('/');
     } catch (error) {
       console.error("Error signing out: ", error);

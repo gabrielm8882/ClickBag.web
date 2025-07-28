@@ -1,13 +1,13 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useAuth } from '@/hooks/use-auth';
 
 const registerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -42,6 +43,13 @@ export default function RegisterPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const { user, signInWithGoogle } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -58,9 +66,13 @@ export default function RegisterPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       await updateProfile(userCredential.user, { displayName: values.name });
 
-      // Create user document in Firestore
       const userDocRef = doc(db, 'users', userCredential.user.uid);
-      await setDoc(userDocRef, { totalPoints: 0, totalTrees: 0, displayName: values.name, email: values.email });
+      await setDoc(userDocRef, { 
+        totalPoints: 0, 
+        totalTrees: 0, 
+        displayName: values.name, 
+        email: values.email 
+      });
       
       await sendEmailVerification(userCredential.user);
       
@@ -83,40 +95,16 @@ export default function RegisterPage() {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
-    const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      const additionalInfo = getAdditionalUserInfo(result);
-
-      if (additionalInfo?.isNewUser) {
-        // This is a new user, create a document for them in Firestore.
-        const userDocRef = doc(db, 'users', user.uid);
-        await setDoc(userDocRef, { totalPoints: 0, totalTrees: 0, displayName: user.displayName, email: user.email });
-      }
-
-      toast({
-        title: "✅ Registration Successful",
-        description: `Welcome to ClickBag, ${user.displayName}!`,
-      });
-      router.push('/dashboard');
-
+        await signInWithGoogle();
+        // The redirect will happen and useAuth will handle the result.
     } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user') {
         toast({
-          variant: 'destructive',
-          title: 'Sign-up Canceled',
-          description: 'The sign-up popup was closed before completing.',
+            variant: 'destructive',
+            title: 'Google Sign-Up Failed',
+            description: error.message,
         });
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Registration failed',
-          description: error.message,
-        });
-      }
-    } finally {
-      setIsGoogleLoading(false);
+        setIsGoogleLoading(false);
     }
   };
 

@@ -2,27 +2,28 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, getRedirectResult, signInWithRedirect, GoogleAuthProvider } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
 import { LeafLoader } from '@/components/ui/leaf-loader';
+import { getAdditionalUserInfo } from 'firebase/auth';
 
 export interface UserData {
   totalPoints: number;
   totalTrees: number;
+  displayName?: string;
+  email?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   userData: UserData | null;
   loading: boolean;
+  signInWithGoogle: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  userData: null,
-  loading: true,
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -30,49 +31,85 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // onAuthStateChanged is the recommended way to get the current user.
-    // It listens for changes in authentication state and handles session persistence automatically.
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // User is signed in.
-        setUser(user);
-        // Now, listen for changes to this user's data in Firestore.
-        const userDocRef = doc(db, 'users', user.uid);
-        const unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
-          if (doc.exists()) {
-            setUserData(doc.data() as UserData);
+    const processAuth = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          // User has just signed in via redirect.
+          const user = result.user;
+          const additionalInfo = getAdditionalUserInfo(result);
+          if (additionalInfo?.isNewUser) {
+            // Create a document for the new user.
+            const userDocRef = doc(db, 'users', user.uid);
+            await setDoc(userDocRef, { 
+              totalPoints: 0, 
+              totalTrees: 0, 
+              displayName: user.displayName, 
+              email: user.email 
+            });
           }
-          // Set loading to false only after we have user and their data.
-          setLoading(false);
-        });
-        // Return the firestore unsubscribe function to clean up the listener.
-        return unsubscribeFirestore;
-      } else {
-        // User is signed out.
-        setUser(null);
-        setUserData(null);
-        setLoading(false);
+        }
+      } catch (error) {
+        console.error("Error processing redirect result:", error);
       }
-    });
 
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
+      // onAuthStateChanged will handle setting the user state for both
+      // initial load and after the redirect has been processed.
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          setUser(user);
+          const userDocRef = doc(db, 'users', user.uid);
+          const unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
+            if (doc.exists()) {
+              setUserData(doc.data() as UserData);
+            }
+            // We have the user and their data (or confirmed it doesn't exist yet)
+            setLoading(false);
+          });
+          return unsubscribeFirestore;
+        } else {
+          // No user is signed in.
+          setUser(null);
+          setUserData(null);
+          setLoading(false);
+        }
+      });
+      return unsubscribe;
+    };
+
+    processAuth();
   }, []);
+
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    await signInWithRedirect(auth, provider);
+  };
+  
+  const signOut = async () => {
+    await auth.signOut();
+  };
+
 
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-background">
         <LeafLoader />
-        <p className="mt-4 text-muted-foreground">Loading ClickBag...</p>
+        <p className="mt-4 text-muted-foreground">Initializing session...</p>
       </div>
     );
   }
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading }}>
+    <AuthContext.Provider value={{ user, userData, loading, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = (): AuthContextType => {
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};

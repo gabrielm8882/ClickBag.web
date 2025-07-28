@@ -1,15 +1,14 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -30,6 +29,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useAuth } from '@/hooks/use-auth';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
@@ -41,6 +41,14 @@ export default function LoginPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const { user, signInWithGoogle } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
+
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -68,40 +76,17 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
-    const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      const additionalInfo = getAdditionalUserInfo(result);
-
-      if (additionalInfo?.isNewUser) {
-        // This is a new user, create a document for them in Firestore.
-        const userDocRef = doc(db, 'users', user.uid);
-        await setDoc(userDocRef, { totalPoints: 0, totalTrees: 0, displayName: user.displayName, email: user.email });
-      }
-
-      toast({
-        title: "✅ Login Successful",
-        description: `Welcome back, ${user.displayName}!`,
-      });
-      router.push('/dashboard');
-
+      await signInWithGoogle();
+      // The redirect will happen and useAuth will handle the result.
+      // We can show a loading state until the redirect happens.
     } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user') {
         toast({
-          variant: 'destructive',
-          title: 'Sign-in Canceled',
-          description: 'The sign-in popup was closed before completing.',
+            variant: 'destructive',
+            title: 'Google Sign-In Failed',
+            description: error.message,
         });
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Login failed',
-          description: error.message,
-        });
-      }
-    } finally {
-      setIsGoogleLoading(false);
+        setIsGoogleLoading(false);
     }
   };
 
