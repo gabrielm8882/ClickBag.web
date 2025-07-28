@@ -115,9 +115,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
   }, []);
 
+  useEffect(() => {
+    if (!loading && user) {
+        router.push('/dashboard');
+    }
+  }, [user, loading, router]);
+
+
   const signOut = async () => {
     await firebaseSignOut(auth);
-    // onAuthStateChanged will handle the state update and trigger re-render
+    setUser(null);
+    setUserData(null);
+    router.push('/login');
   };
 
   const signInWithEmail = (email: string, password: string) => {
