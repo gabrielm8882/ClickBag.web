@@ -93,8 +93,7 @@ export default function RegisterPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     await signInWithGoogle();
-    // The useAuth hook will handle showing a loading state while the redirect happens.
-    // We don't set isGoogleLoading to false, as the page will unload.
+    // The useAuth hook will handle showing the loader, so we don't set isGoogleLoading to false.
   };
 
   return (

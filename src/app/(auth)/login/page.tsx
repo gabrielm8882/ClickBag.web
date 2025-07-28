@@ -49,7 +49,6 @@ export default function LoginPage() {
     }
   }, [user, router]);
 
-
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -62,7 +61,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // The useAuth hook will handle the redirect upon successful sign-in
+      // The useAuth hook's onAuthStateChanged will handle the redirect.
     } catch (error: any) {
       let description = "An unknown error occurred.";
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
@@ -81,8 +80,7 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     await signInWithGoogle();
-    // The useAuth hook will handle showing a loading state while the redirect happens.
-    // We don't set isGoogleLoading to false, as the page will unload.
+    // The useAuth hook will handle showing the loader, so we don't set isGoogleLoading to false.
   };
 
   return (
