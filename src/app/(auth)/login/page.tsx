@@ -53,20 +53,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      if (!userCredential.user.emailVerified) {
-        toast({
-          variant: 'destructive',
-          title: 'Email not verified',
-          description: 'Please check your inbox and verify your email address to log in.',
-        });
-        await auth.signOut(); // Ensure user is logged out
-        return;
-      }
-      toast({
-        title: "Login successful",
-        description: "Welcome back!",
-      });
-      router.push('/dashboard');
+      // The onAuthStateChanged listener in useAuth will handle the redirect.
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -85,7 +72,7 @@ export default function LoginPage() {
     // This avoids issues with popup blockers and various browser security policies.
     await signInWithRedirect(auth, provider);
     // The user will be redirected to the Google sign-in page.
-    // The result is handled by the getRedirectResult() logic in the AuthProvider.
+    // The result is handled by the logic in useAuth.tsx.
   };
 
   return (

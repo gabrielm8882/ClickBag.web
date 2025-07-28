@@ -7,6 +7,7 @@ import { auth, db } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { LeafLoader } from '@/components/ui/leaf-loader';
 import { useToast } from './use-toast';
+import { useRouter } from 'next/navigation';
 
 export interface UserData {
   totalPoints: number;
@@ -30,28 +31,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
-    // This function will handle both redirect results and ongoing auth state.
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
+    let unsubscribeFirestore: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+      // If a user is logged in
       if (currentUser) {
-        // If user object exists, we are logged in.
-        // Set up listener for user-specific data.
+        setUser(currentUser);
+        
+        // Unsubscribe from any previous Firestore listener
+        if (unsubscribeFirestore) {
+          unsubscribeFirestore();
+        }
+
+        // Set up a new listener for the current user's data
         const userDocRef = doc(db, 'users', currentUser.uid);
-        const unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
+        unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
           if (doc.exists()) {
             setUserData(doc.data() as UserData);
           } else {
+            // User document might not exist yet for a new sign-up
             setUserData({ totalPoints: 0, totalTrees: 0 });
           }
-          setLoading(false); // Stop loading once user data is fetched/set.
+          // Only stop loading once we have both user and user data
+          setLoading(false);
         });
-        // We might need to return this unsubscribe function, but onAuthStateChanged already handles cleanup.
+        
+        // If the user is logged in, and we are on login/register, redirect to dashboard
+        // This is a check for existing sessions
+        if (window.location.pathname === '/login' || window.location.pathname === '/register') {
+           router.push('/dashboard');
+        }
+
       } else {
-        // No user is signed in.
+        // No user is signed in
+        setUser(null);
         setUserData(null);
-        setLoading(false); // Stop loading.
+        if (unsubscribeFirestore) {
+          unsubscribeFirestore();
+        }
+        setLoading(false);
       }
     });
 
@@ -75,6 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 description: "Welcome back!",
             });
           }
+          router.push('/dashboard');
         }
       })
       .catch((error) => {
@@ -86,9 +108,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
       });
 
-    // Cleanup the onAuthStateChanged listener when the component unmounts.
-    return () => unsubscribe();
-  }, [toast]);
+    // Cleanup both listeners when the component unmounts.
+    return () => {
+        unsubscribeAuth();
+        if (unsubscribeFirestore) {
+            unsubscribeFirestore();
+        }
+    };
+  }, [toast, router]);
 
 
   if (loading) {

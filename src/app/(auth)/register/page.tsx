@@ -79,10 +79,8 @@ export default function RegisterPage() {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     // Use signInWithRedirect as the sole method for Google sign-in to improve reliability.
-    // This avoids issues with popup blockers and various browser security policies.
     await signInWithRedirect(auth, provider);
-    // The user will be redirected to the Google sign-in page.
-    // The result is handled by the getRedirectResult() logic in the AuthProvider.
+    // The result is handled by the logic in useAuth.tsx.
   };
 
   return (
