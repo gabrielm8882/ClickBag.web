@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signInWithEmailAndPassword, signInWithRedirect, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -53,7 +53,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // The onAuthStateChanged listener in useAuth will handle the redirect.
+      router.push('/dashboard');
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -67,12 +67,22 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
-    const provider = new GoogleAuthProvider();
-    // Use signInWithRedirect as the sole method for Google sign-in to improve reliability.
-    // This avoids issues with popup blockers and various browser security policies.
-    await signInWithRedirect(auth, provider);
-    // The user will be redirected to the Google sign-in page.
-    // The result is handled by the logic in useAuth.tsx.
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      router.push('/dashboard');
+    } catch (error: any) {
+      // Don't show a toast for user-cancelled popups
+      if (error.code !== 'auth/popup-closed-by-user') {
+        toast({
+          variant: 'destructive',
+          title: 'Google Sign-in failed',
+          description: error.message,
+        });
+      }
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   return (

@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signInWithRedirect, GoogleAuthProvider } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -77,10 +77,31 @@ export default function RegisterPage() {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
-    const provider = new GoogleAuthProvider();
-    // Use signInWithRedirect as the sole method for Google sign-in to improve reliability.
-    await signInWithRedirect(auth, provider);
-    // The result is handled by the logic in useAuth.tsx.
+    try {
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        const additionalInfo = getAdditionalUserInfo(result);
+        
+        if (additionalInfo?.isNewUser) {
+            sessionStorage.setItem('isNewUser', 'true'); // Mark as new user for a one-time welcome message
+            toast({
+                title: "Account created",
+                description: "Welcome to ClickBag!",
+            });
+        }
+        router.push('/dashboard');
+    } catch (error: any) {
+        // Don't show a toast for user-cancelled popups
+        if (error.code !== 'auth/popup-closed-by-user') {
+            toast({
+                variant: 'destructive',
+                title: 'Google Sign-up failed',
+                description: error.message,
+            });
+        }
+    } finally {
+        setIsGoogleLoading(false);
+    }
   };
 
   return (
