@@ -107,23 +107,6 @@ export default function DashboardPage() {
     if (user) {
       setPageLoading(true);
 
-      // --- Simulation Code ---
-      // This part is for testing purposes to show the progress bar animation.
-      setDailyTrees(1);
-      const testSubmission: Submission = {
-        id: 'test-submission-id',
-        date: Timestamp.now(),
-        geolocation: 'Test City, Test Country',
-        points: 10,
-        status: 'Approved',
-      };
-      setSubmissions([testSubmission]);
-      setPageLoading(false);
-      // --- End Simulation Code ---
-
-
-      /*
-      // --- Original Firestore Code ---
       const today = new Date();
       const startOfToday = startOfDay(today);
       const endOfToday = endOfDay(today);
@@ -156,8 +139,6 @@ export default function DashboardPage() {
       return () => {
         unsubscribeSubmissions();
       };
-      // --- End Original Firestore Code ---
-      */
     }
   }, [user]);
 
