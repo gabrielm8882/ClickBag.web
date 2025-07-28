@@ -131,8 +131,6 @@ export default function DashboardPage() {
 
       const q = query(
         collection(db, 'submissions'),
-        orderBy('userId'),
-        orderBy('date', 'desc'),
         where('userId', '==', user.uid)
       );
       
@@ -152,9 +150,16 @@ export default function DashboardPage() {
                 todayTreeCount += 1;
             }
         });
+
+        // Sort submissions by date on the client-side
+        userSubmissions.sort((a, b) => b.date.toDate().getTime() - a.date.toDate().getTime());
+        
         setSubmissions(userSubmissions);
         setDailyTrees(todayTreeCount);
         setPageLoading(false);
+      }, (error) => {
+          console.error("Error fetching submissions:", error);
+          setPageLoading(false);
       });
       
       return () => {
