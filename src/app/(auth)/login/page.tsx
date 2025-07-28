@@ -52,7 +52,7 @@ export default function LoginPage() {
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      await signInWithEmailAndPassword(auth, values.email, values.password);
       // The onAuthStateChanged listener in useAuth will handle the redirect.
     } catch (error: any) {
       toast({

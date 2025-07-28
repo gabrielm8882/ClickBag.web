@@ -34,70 +34,54 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    let unsubscribeFirestore: (() => void) | null = null;
-
-    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
-      // If a user is logged in
-      if (currentUser) {
-        setUser(currentUser);
-        
-        // Unsubscribe from any previous Firestore listener
-        if (unsubscribeFirestore) {
-          unsubscribeFirestore();
-        }
-
-        // Set up a new listener for the current user's data
-        const userDocRef = doc(db, 'users', currentUser.uid);
-        unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
-          if (doc.exists()) {
-            setUserData(doc.data() as UserData);
-          } else {
-            // User document might not exist yet for a new sign-up
-            setUserData({ totalPoints: 0, totalTrees: 0 });
-          }
-          // Only stop loading once we have both user and user data
-          setLoading(false);
-        });
-        
-        // If the user is logged in, and we are on login/register, redirect to dashboard
-        // This is a check for existing sessions
-        if (window.location.pathname === '/login' || window.location.pathname === '/register') {
-           router.push('/dashboard');
-        }
-
-      } else {
-        // No user is signed in
-        setUser(null);
-        setUserData(null);
-        if (unsubscribeFirestore) {
-          unsubscribeFirestore();
-        }
-        setLoading(false);
-      }
-    });
-
-    // Handle the redirect result separately on initial load.
-    // This is crucial to prevent the race condition.
+    // This effect should only run once on mount to handle the initial auth state.
+    
+    // First, process the redirect result. This is crucial to prevent a race condition.
     getRedirectResult(auth)
       .then((result) => {
         if (result) {
           // User has successfully signed in or signed up via redirect.
-          // onAuthStateChanged will fire and handle the user state update.
           const additionalInfo = getAdditionalUserInfo(result);
           if (additionalInfo?.isNewUser) {
-            sessionStorage.setItem('isNewUser', 'true');
-             toast({
+            sessionStorage.setItem('isNewUser', 'true'); // Mark as new user for a one-time welcome message
+            toast({
                 title: "Account created",
                 description: "Welcome to ClickBag!",
             });
-          } else {
-             toast({
-                title: "Login successful",
-                description: "Welcome back!",
-            });
           }
+          // The onAuthStateChanged observer below will handle setting the user state.
+          // We redirect here to ensure the user lands on the dashboard after a successful Google sign-in.
           router.push('/dashboard');
         }
+
+        // After handling the redirect, set up the onAuthStateChanged listener.
+        // This is the single source of truth for the user's auth state.
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+          if (currentUser) {
+            setUser(currentUser);
+            // Now that we have a user, listen for their data from Firestore.
+            const userDocRef = doc(db, 'users', currentUser.uid);
+            const unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
+              if (doc.exists()) {
+                setUserData(doc.data() as UserData);
+              } else {
+                setUserData({ totalPoints: 0, totalTrees: 0 });
+              }
+              setLoading(false); // Stop loading only after user and their data is loaded.
+            });
+            // Important: Return the Firestore listener cleanup function.
+            return () => unsubscribeFirestore();
+          } else {
+            // No user is signed in.
+            setUser(null);
+            setUserData(null);
+            setLoading(false); // Stop loading.
+          }
+        });
+        
+        // Return the auth listener cleanup function.
+        return unsubscribe;
+
       })
       .catch((error) => {
         console.error("Error handling redirect result:", error);
@@ -106,15 +90,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           title: 'Sign-in failed',
           description: error.message,
         });
+        setLoading(false); // Stop loading even if there's an error.
       });
 
-    // Cleanup both listeners when the component unmounts.
-    return () => {
-        unsubscribeAuth();
-        if (unsubscribeFirestore) {
-            unsubscribeFirestore();
-        }
-    };
   }, [toast, router]);
 
 
@@ -128,7 +106,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading }}>
+    <AuthContext.Provider value={{ user, userData, loading: false }}>
       {children}
     </AuthContext.Provider>
   );
