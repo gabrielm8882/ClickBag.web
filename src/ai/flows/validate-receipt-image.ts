@@ -171,32 +171,30 @@ const validateReceiptImageFlow = ai.defineFlow(
     });
 
     if (output.isValid) {
-        try {
-            const communityStatsRef = doc(db, 'community-stats', 'global');
-            const communityStatsDoc = await getDoc(communityStatsRef);
+        // We use a transaction to safely update the user's and community's points.
+        const communityStatsRef = doc(db, 'community-stats', 'global');
+        
+        // We need the documents to exist for the transaction, so we get them first.
+        const userDoc = await getDoc(userDocRef);
+        const communityStatsDoc = await getDoc(communityStatsRef);
 
-            // Update user stats
-            const newTotalPoints = (userDoc.data()?.totalPoints || 0) + output.clickPoints;
-            const newTotalTrees = Math.floor(newTotalPoints / POINTS_PER_TREE);
-            
-            if (!userDoc.exists()) {
-                batch.set(userDocRef, { totalPoints: newTotalPoints, totalTrees: newTotalTrees });
-            } else {
-                batch.update(userDocRef, { totalPoints: newTotalPoints, totalTrees: newTotalTrees });
-            }
+        const newTotalPoints = (userDoc.data()?.totalPoints || 0) + output.clickPoints;
+        const newTotalTrees = Math.floor(newTotalPoints / POINTS_PER_TREE);
 
-            // Update community stats
-            const newCommunityPoints = (communityStatsDoc.data()?.totalClickPoints || 0) + output.clickPoints;
-            const newCommunityTrees = (communityStatsDoc.data()?.totalTreesPlanted || 0) + TREES_PER_VALIDATION;
+        if (!userDoc.exists()) {
+             batch.set(userDocRef, { totalPoints: newTotalPoints, totalTrees: newTotalTrees });
+        } else {
+             batch.update(userDocRef, { totalPoints: newTotalPoints, totalTrees: newTotalTrees });
+        }
+        
+        // Update community stats
+        const newCommunityPoints = (communityStatsDoc.data()?.totalClickPoints || 0) + output.clickPoints;
+        const newCommunityTrees = (communityStatsDoc.data()?.totalTreesPlanted || 0) + TREES_PER_VALIDATION;
 
-            if (!communityStatsDoc.exists()) {
-                batch.set(communityStatsRef, { totalClickPoints: newCommunityPoints, totalTreesPlanted: newCommunityTrees });
-            } else {
-                batch.update(communityStatsRef, { totalClickPoints: newCommunityPoints, totalTreesPlanted: newCommunityTrees });
-            }
-        } catch (e) {
-            console.error("Failed to prepare batch updates for points: ", e);
-            throw new Error("Failed to update user and community points.");
+        if (!communityStatsDoc.exists()) {
+            batch.set(communityStatsRef, { totalClickPoints: newCommunityPoints, totalTreesPlanted: newCommunityTrees });
+        } else {
+            batch.update(communityStatsRef, { totalClickPoints: newCommunityPoints, totalTreesPlanted: newCommunityTrees });
         }
     }
 

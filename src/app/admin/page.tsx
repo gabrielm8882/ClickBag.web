@@ -43,6 +43,11 @@ interface Submission {
   userName?: string; 
 }
 
+interface CommunityStats {
+    totalTreesPlanted: number;
+    totalClickPoints: number;
+}
+
 function AnimatedCounter({ endValue }: { endValue: number }) {
   const [count, setCount] = useState(0);
 
@@ -81,8 +86,7 @@ export default function AdminPage() {
   
   const [users, setUsers] = useState<FullUserData[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [totalPoints, setTotalPoints] = useState(0);
-  const [totalTrees, setTotalTrees] = useState(0);
+  const [communityStats, setCommunityStats] = useState<CommunityStats>({ totalClickPoints: 0, totalTreesPlanted: 0 });
 
   useEffect(() => {
     if (!loading) {
@@ -96,26 +100,27 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (isAdmin) {
+      // Fetch Community Stats
+      const statsUnsubscribe = onSnapshot(doc(db, 'community-stats', 'global'), (doc) => {
+        if (doc.exists()) {
+            setCommunityStats(doc.data() as CommunityStats);
+        }
+      });
+
+      // Fetch Users and create a map for submissions
       const usersQuery = query(collection(db, 'users'), orderBy('totalPoints', 'desc'));
       const usersUnsubscribe = onSnapshot(usersQuery, (usersSnapshot) => {
         const usersData: FullUserData[] = [];
         const userMap = new Map<string, string>();
-        let points = 0;
-        let trees = 0;
-
+        
         usersSnapshot.forEach((doc) => {
           const data = doc.data() as UserData;
           usersData.push({ id: doc.id, ...data });
           userMap.set(doc.id, data.displayName || 'Unknown User');
-          points += data.totalPoints || 0;
-          trees += data.totalTrees || 0;
         });
-
         setUsers(usersData);
-        setTotalPoints(points);
-        setTotalTrees(trees);
 
-        // Now that we have the latest user map, let's fetch submissions.
+        // Fetch Submissions and map user names
         const submissionsQuery = query(collection(db, 'submissions'), orderBy('date', 'desc'));
         const submissionsUnsubscribe = onSnapshot(submissionsQuery, (submissionsSnapshot) => {
           const submissionsData: Submission[] = submissionsSnapshot.docs.map(doc => {
@@ -135,7 +140,10 @@ export default function AdminPage() {
         console.error("Error fetching users:", error);
       });
 
-      return () => usersUnsubscribe();
+      return () => {
+        statsUnsubscribe();
+        usersUnsubscribe();
+      };
     }
   }, [isAdmin]);
 
@@ -184,7 +192,7 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                <AnimatedCounter endValue={totalPoints} />
+                <AnimatedCounter endValue={communityStats.totalClickPoints} />
               </div>
               <p className="text-xs text-muted-foreground">
                 Total points earned by the community
@@ -198,7 +206,7 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                <AnimatedCounter endValue={totalTrees} />
+                <AnimatedCounter endValue={communityStats.totalTreesPlanted} />
               </div>
               <p className="text-xs text-muted-foreground">
                 Total trees planted by the community
@@ -298,4 +306,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
