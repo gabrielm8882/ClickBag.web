@@ -29,7 +29,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Leaf, Coins, User, Users, History, CheckCircle, XCircle, Trash2, Edit, Save } from 'lucide-react';
+import { Shield, Leaf, Coins, User, Users, History, CheckCircle, XCircle, Trash2, Edit, Save, Plus, Minus } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import {
@@ -477,14 +477,23 @@ export default function AdminPage() {
             <div className="py-4 space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="points">Total Points</Label>
-                <Input
-                  id="points"
-                  type="number"
-                  value={newPoints}
-                  onChange={(e) => setNewPoints(Number(e.target.value))}
-                />
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="icon" onClick={() => setNewPoints(p => Math.max(0, p - 10))}>
+                        <Minus className="h-4 w-4" />
+                    </Button>
+                    <Input
+                      id="points"
+                      type="number"
+                      value={newPoints}
+                      onChange={(e) => setNewPoints(Number(e.target.value))}
+                      className="text-center"
+                    />
+                     <Button variant="outline" size="icon" onClick={() => setNewPoints(p => p + 10)}>
+                        <Plus className="h-4 w-4" />
+                    </Button>
+                </div>
               </div>
-               <p className="text-sm text-muted-foreground">
+               <p className="text-sm text-muted-foreground text-center">
                   New tree count: {Math.floor(newPoints / 10)}
                 </p>
             </div>
@@ -502,3 +511,4 @@ export default function AdminPage() {
     </div>
   );
 }
+
