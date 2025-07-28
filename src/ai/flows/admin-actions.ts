@@ -30,10 +30,13 @@ export const deleteSubmission = ai.defineFlow(
     name: 'deleteSubmission',
     inputSchema: DeleteSubmissionInputSchema,
     outputSchema: z.void(),
+    auth: (auth) => { // Auth policy to ensure only admins can run this
+        if (!auth || auth.email !== ADMIN_EMAIL) {
+            throw new Error("You must be an admin to perform this action.");
+        }
+    }
   },
-  async (submissionId, context) => {
-    ensureAdmin(context);
-
+  async (submissionId) => {
     try {
       await runTransaction(db, async (transaction) => {
         const submissionRef = doc(db, 'submissions', submissionId);
@@ -102,10 +105,13 @@ export const updateUserPoints = ai.defineFlow(
         name: 'updateUserPoints',
         inputSchema: UpdateUserPointsInputSchema,
         outputSchema: z.void(),
+        auth: (auth) => { // Auth policy to ensure only admins can run this
+            if (!auth || auth.email !== ADMIN_EMAIL) {
+                throw new Error("You must be an admin to perform this action.");
+            }
+        }
     },
-    async ({ userId, newTotalPoints }, context) => {
-        ensureAdmin(context);
-
+    async ({ userId, newTotalPoints }) => {
         const userRef = doc(db, 'users', userId);
         const newTotalTrees = Math.floor(newTotalPoints / POINTS_PER_TREE);
         
