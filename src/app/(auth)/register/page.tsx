@@ -7,8 +7,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signInWithRedirect, GoogleAuthProvider, getAdditionalUserInfo } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -46,7 +47,7 @@ export default function RegisterPage() {
   
   useEffect(() => {
     // Detect if the app is running in an iframe (e.g., Firebase Studio preview)
-    if (window.self !== window.top) {
+    if (typeof window !== 'undefined' && window.self !== window.top) {
       setIsIframe(true);
     }
   }, []);
@@ -65,6 +66,11 @@ export default function RegisterPage() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       await updateProfile(userCredential.user, { displayName: values.name });
+
+      // Create user document in Firestore
+      const userDocRef = doc(db, 'users', userCredential.user.uid);
+      await setDoc(userDocRef, { totalPoints: 0, totalTrees: 0 });
+      
       await sendEmailVerification(userCredential.user);
       
       toast({
@@ -88,13 +94,41 @@ export default function RegisterPage() {
     setIsGoogleLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithRedirect(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const additionalInfo = getAdditionalUserInfo(result);
+
+      if (additionalInfo?.isNewUser) {
+        // Create user document in Firestore for new Google users
+        const userDocRef = doc(db, 'users', result.user.uid);
+        await setDoc(userDocRef, { totalPoints: 0, totalTrees: 0 });
+        toast({
+          title: "✅ Registration Complete",
+          description: `Welcome to ClickBag, ${result.user.displayName}!`,
+        });
+        sessionStorage.setItem('isNewUser', 'true');
+      } else {
+        toast({
+            title: "✅ Login Successful",
+            description: `Welcome back, ${result.user.displayName}!`,
+        });
+      }
+
+      router.push('/dashboard');
     } catch (error: any) {
+      let description = "An unknown error occurred.";
+      if (error.code === 'auth/popup-closed-by-user') {
+        description = "The sign-up popup was closed before completing the process. Please try again.";
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        description = "Multiple sign-up popups were opened. Please try again."
+      } else {
+        description = error.message;
+      }
       toast({
         variant: 'destructive',
         title: 'Google Sign-up failed',
-        description: error.message,
+        description: description,
       });
+    } finally {
       setIsGoogleLoading(false);
     }
   };
@@ -113,7 +147,7 @@ export default function RegisterPage() {
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Authentication Notice</AlertTitle>
             <AlertDescription>
-              To test Google Sign-Up, please open the application in a new browser tab. Popups and redirects are restricted within this preview iframe.
+              To test Google Sign-Up, please open the application in a new browser tab. Popups are restricted within this preview iframe.
             </AlertDescription>
           </Alert>
           <Button onClick={() => window.open(window.location.href, '_blank')} className="w-full mt-4">
@@ -177,7 +211,7 @@ export default function RegisterPage() {
           </CardContent>
           <CardFooter className="flex-col gap-4">
             <Button type="submit" className="w-full shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow" disabled={isLoading || isGoogleLoading}>
-              {isLoading || isGoogleLoading ? <Loader2 className="animate-spin" /> : 'Create account'}
+              {isLoading ? <Loader2 className="animate-spin" /> : 'Create account'}
             </Button>
              <Button variant="outline" type="button" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
               {isGoogleLoading ? <Loader2 className="animate-spin" /> : 'Sign up with Google'}

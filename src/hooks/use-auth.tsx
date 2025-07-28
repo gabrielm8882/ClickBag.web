@@ -29,47 +29,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   useEffect(() => {
-    const processRedirect = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          toast({
-            title: "✅ Login Successful",
-            description: `Welcome back, ${result.user.displayName}!`,
-          });
-          
-          const additionalInfo = getAdditionalUserInfo(result);
-          if (additionalInfo?.isNewUser) {
-            sessionStorage.setItem('isNewUser', 'true');
-            const userDocRef = doc(db, 'users', result.user.uid);
-            const docSnap = await getDoc(userDocRef);
-            if (!docSnap.exists()) {
-              await setDoc(userDocRef, { totalPoints: 0, totalTrees: 0 });
-            }
-          }
-        }
-      } catch (error: any) {
-         console.error("Error during getRedirectResult:", error);
-         toast({
-             variant: "destructive",
-             title: "Authentication Error",
-             description: "Could not complete the sign-in process. Please try again.",
-         });
-      }
-    };
-
-    processRedirect();
-
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
         const userDocRef = doc(db, 'users', currentUser.uid);
         const unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
-          setUserData(doc.exists() ? (doc.data() as UserData) : { totalPoints: 0, totalTrees: 0 });
-          setLoading(false);
+          if (doc.exists()) {
+            setUserData(doc.data() as UserData);
+          } else {
+            // This might be a new user, but we'll let the signup logic handle doc creation.
+            setUserData({ totalPoints: 0, totalTrees: 0 });
+          }
+           setLoading(false);
         }, (error) => {
             console.error("Error fetching user data:", error);
             setLoading(false);
@@ -83,7 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [toast]);
+  }, []);
 
   if (loading) {
     return (
