@@ -130,9 +130,10 @@ export default function DashboardPage() {
       const startOfToday = startOfDay(today);
 
       const q = query(
-        collection(db, 'submissions'), 
-        where('userId', '==', user.uid),
-        orderBy('date', 'desc')
+        collection(db, 'submissions'),
+        orderBy('userId'),
+        orderBy('date', 'desc'),
+        where('userId', '==', user.uid)
       );
       
       const unsubscribeSubmissions = onSnapshot(q, (querySnapshot) => {
@@ -360,5 +361,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-    
