@@ -8,10 +8,11 @@ import { getFirestore } from 'firebase/firestore';
 const firebaseConfig = {
   apiKey: "AIzaSyCw411oL8AA1WkFucgL-MFXFWaJvFmj3ww",
   authDomain: "clickbag.firebaseapp.com",
+  databaseURL: "https://clickbag-default-rtdb.firebaseio.com",
   projectId: "clickbag",
-  storageBucket: "clickbag.appspot.com",
+  storageBucket: "clickbag.firebasestorage.app",
   messagingSenderId: "344787097382",
-  appId: "1:344787097382:web:fee267eccab031c50813e7",
+  appId: "1:344787097382:web:fee267eccab031c50813e7"
 };
 
 // Initialize Firebase only once.
