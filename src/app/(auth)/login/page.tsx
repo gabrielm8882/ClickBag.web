@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithRedirect, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -67,20 +67,17 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
+    // Use signInWithRedirect as the primary method for reliability.
+    // It avoids popup-related issues on different browsers and devices.
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
+      await signInWithRedirect(auth, provider);
     } catch (error: any) {
-      // Don't show a toast for user-cancelled popups
-      if (error.code !== 'auth/popup-closed-by-user') {
-        toast({
-          variant: 'destructive',
-          title: 'Google Sign-in failed',
-          description: error.message,
-        });
-      }
-    } finally {
+      toast({
+        variant: 'destructive',
+        title: 'Google Sign-in failed',
+        description: error.message,
+      });
       setIsGoogleLoading(false);
     }
   };
@@ -125,7 +122,7 @@ export default function LoginPage() {
           </CardContent>
           <CardFooter className="flex-col gap-4">
             <Button type="submit" className="w-full shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow" disabled={isLoading || isGoogleLoading}>
-              {isLoading ? <Loader2 className="animate-spin" /> : 'Sign in'}
+              {isLoading || isGoogleLoading ? <Loader2 className="animate-spin" /> : 'Sign in'}
             </Button>
             <Button variant="outline" type="button" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
               {isGoogleLoading ? <Loader2 className="animate-spin" /> : 'Sign in with Google'}

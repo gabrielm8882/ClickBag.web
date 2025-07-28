@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signInWithRedirect, GoogleAuthProvider, getAdditionalUserInfo } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -77,30 +77,18 @@ export default function RegisterPage() {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
+    // Use signInWithRedirect as the primary method for reliability.
+    // It avoids popup-related issues on different browsers and devices.
     try {
-        const provider = new GoogleAuthProvider();
-        const result = await signInWithPopup(auth, provider);
-        const additionalInfo = getAdditionalUserInfo(result);
-        
-        if (additionalInfo?.isNewUser) {
-            sessionStorage.setItem('isNewUser', 'true'); // Mark as new user for a one-time welcome message
-            toast({
-                title: "Account created",
-                description: "Welcome to ClickBag!",
-            });
-        }
-        router.push('/dashboard');
+      const provider = new GoogleAuthProvider();
+      await signInWithRedirect(auth, provider);
     } catch (error: any) {
-        // Don't show a toast for user-cancelled popups
-        if (error.code !== 'auth/popup-closed-by-user') {
-            toast({
-                variant: 'destructive',
-                title: 'Google Sign-up failed',
-                description: error.message,
-            });
-        }
-    } finally {
-        setIsGoogleLoading(false);
+      toast({
+        variant: 'destructive',
+        title: 'Google Sign-up failed',
+        description: error.message,
+      });
+      setIsGoogleLoading(false);
     }
   };
 
@@ -157,7 +145,7 @@ export default function RegisterPage() {
           </CardContent>
           <CardFooter className="flex-col gap-4">
             <Button type="submit" className="w-full shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow" disabled={isLoading || isGoogleLoading}>
-              {isLoading ? <Loader2 className="animate-spin" /> : 'Create account'}
+              {isLoading || isGoogleLoading ? <Loader2 className="animate-spin" /> : 'Create account'}
             </Button>
              <Button variant="outline" type="button" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
               {isGoogleLoading ? <Loader2 className="animate-spin" /> : 'Sign up with Google'}
