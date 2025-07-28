@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -38,7 +38,14 @@ const registerSchema = z.object({
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { registerWithEmail, signInWithGoogle } = useAuth();
+  const { registerWithEmail, signInWithGoogle, user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
   
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),

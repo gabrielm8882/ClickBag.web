@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -37,8 +37,14 @@ const loginSchema = z.object({
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { signInWithEmail, signInWithGoogle } = useAuth();
+  const { signInWithEmail, signInWithGoogle, user, loading } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -72,7 +78,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithGoogle();
-      // Redirect logic is handled by the useAuth hook after redirect result is processed
+      // The redirect flow is handled by the useAuth hook
     } catch (error: any) {
       toast({
         variant: 'destructive',
