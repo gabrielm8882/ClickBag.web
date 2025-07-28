@@ -67,6 +67,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     getRedirectResult(auth)
       .then(async (result) => {
         if (result) {
+          toast({
+            title: "✅ Login Successful",
+            description: `Welcome back, ${result.user.displayName}!`,
+          });
           // This means a user has just signed in via redirect.
           const additionalInfo = getAdditionalUserInfo(result);
           if (additionalInfo?.isNewUser) {

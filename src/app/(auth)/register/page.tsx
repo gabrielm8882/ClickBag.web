@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -29,6 +29,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const registerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -39,8 +40,16 @@ const registerSchema = z.object({
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isIframe, setIsIframe] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  
+  useEffect(() => {
+    // Detect if the app is running in an iframe (e.g., Firebase Studio preview)
+    if (window.self !== window.top) {
+      setIsIframe(true);
+    }
+  }, []);
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -77,8 +86,8 @@ export default function RegisterPage() {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
-    // Use signInWithRedirect as the primary method for reliability.
-    // It avoids popup-related issues on different browsers and devices.
+    // Use signInWithRedirect as the sole method for Google Sign-Up
+    // to ensure reliability across all browsers and avoid popup-related issues.
     try {
       const provider = new GoogleAuthProvider();
       await signInWithRedirect(auth, provider);
@@ -91,6 +100,31 @@ export default function RegisterPage() {
       setIsGoogleLoading(false);
     }
   };
+
+  if (isIframe) {
+    return (
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-2xl font-headline">Preview Mode</CardTitle>
+          <CardDescription>
+            Authentication needs to be tested in a separate window.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Authentication Notice</AlertTitle>
+            <AlertDescription>
+              To test Google Sign-Up, please open the application in a new browser tab. Popups and redirects are restricted within this preview iframe.
+            </AlertDescription>
+          </Alert>
+          <Button onClick={() => window.open(window.location.href, '_blank')} className="w-full mt-4">
+            Open in New Tab
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-sm">
