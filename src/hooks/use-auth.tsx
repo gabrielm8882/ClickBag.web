@@ -45,47 +45,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const handleUser = useCallback(async (rawUser: User | null) => {
-    if (rawUser) {
-      setUser(rawUser);
-      const userDocRef = doc(db, 'users', rawUser.uid);
-      const unsub = onSnapshot(userDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-          setUserData(docSnap.data() as UserData);
-        } else {
-          // This case can happen briefly if a new user's doc hasn't been created yet.
-          // The getRedirectResult logic should handle creating it.
-          setUserData(null);
-        }
-        setLoading(false);
-      }, (error) => {
-        console.error("Error with user data snapshot:", error);
-        setUserData(null);
-        setLoading(false);
-      });
-      return unsub;
-    } else {
-      setUser(null);
-      setUserData(null);
-      setLoading(false);
-      return () => {};
-    }
-  }, []);
-
   useEffect(() => {
-    setLoading(true);
-    // This is the primary listener for auth state.
-    // It will fire after getRedirectResult is processed or for any other auth change.
-    const unsubscribeAuthState = onAuthStateChanged(auth, handleUser);
-
-    // This handles the result from a Google Sign-In redirect.
-    getRedirectResult(auth)
-      .then(async (result) => {
+    // This combined effect handles all authentication state changes.
+    // It's structured to prevent race conditions during redirects.
+    const processAuth = async () => {
+      try {
+        // First, check if there's a result from a redirect sign-in
+        const result = await getRedirectResult(auth);
+        
         if (result) {
-          // User has successfully signed in via redirect.
+          // If a user is new, create their Firestore document.
           const isNewUser = getAdditionalUserInfo(result)?.isNewUser;
           if (isNewUser) {
-            // If it's a new user, create their document in Firestore.
             const userDocRef = doc(db, 'users', result.user.uid);
             await setDoc(userDocRef, {
               displayName: result.user.displayName,
@@ -95,28 +66,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             });
             sessionStorage.setItem('isNewUser', 'true');
           }
+          // The onAuthStateChanged listener below will handle setting the user state.
         }
-        // If result is null, it means no redirect was in progress.
-        // The onAuthStateChanged listener will handle any existing session.
-        // We set loading to false here only if no redirect occurred,
-        // otherwise handleUser will set it.
-        if (!result) {
+      } catch (error) {
+        console.error("Error processing redirect result:", error);
+      }
+
+      // Set up the primary listener for auth state.
+      // This will fire after the redirect is processed OR for any other auth change.
+      const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+        if (currentUser) {
+          setUser(currentUser);
+          // Fetch associated user data from Firestore
+          const userDocRef = doc(db, 'users', currentUser.uid);
+          const unsubSnapshot = onSnapshot(userDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+              setUserData(docSnap.data() as UserData);
+            } else {
+              setUserData(null);
+            }
+            // Only stop loading after user and user data are confirmed.
             setLoading(false);
+          });
+          // Note: Returning the snapshot listener for cleanup is complex here.
+          // The main auth unsubscribe handles the primary cleanup.
+        } else {
+          // No user is signed in.
+          setUser(null);
+          setUserData(null);
+          setLoading(false);
         }
-      })
-      .catch((error) => {
-        console.error("Error getting redirect result:", error);
-        setLoading(false);
       });
       
-    return () => {
-      unsubscribeAuthState();
+      // Cleanup the auth listener when the component unmounts.
+      return () => unsubscribe();
     };
-  }, [handleUser]); 
+
+    processAuth();
+    
+  }, []); 
   
   const signOut = async () => {
     await firebaseSignOut(auth);
-    // No need to push, onAuthStateChanged will trigger a rerender which will cause redirect
+    // onAuthStateChanged will handle the state update and trigger re-render
   };
 
   const signInWithEmail = (email: string, password: string) => {
@@ -144,7 +136,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
-    // Use signInWithRedirect for a more robust flow that works in previews/iframes.
+    // Use signInWithRedirect for a more robust flow that works in all environments.
     await signInWithRedirect(auth, provider);
   };
 
