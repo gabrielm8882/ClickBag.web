@@ -2,11 +2,11 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User, getRedirectResult, signInWithRedirect, GoogleAuthProvider } from 'firebase/auth';
+import { onAuthStateChanged, User, signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
 import { LeafLoader } from '@/components/ui/leaf-loader';
-import { getAdditionalUserInfo } from 'firebase/auth';
+import { useToast } from './use-toast';
 
 export interface UserData {
   totalPoints: number;
@@ -29,67 +29,83 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const processAuth = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          // User has just signed in via redirect.
-          const user = result.user;
-          const additionalInfo = getAdditionalUserInfo(result);
-          if (additionalInfo?.isNewUser) {
-            // Create a document for the new user.
-            const userDocRef = doc(db, 'users', user.uid);
-            await setDoc(userDocRef, { 
-              totalPoints: 0, 
-              totalTrees: 0, 
-              displayName: user.displayName, 
-              email: user.email 
-            });
+    // This is the single source of truth for auth state.
+    // onAuthStateChanged handles all session scenarios:
+    // - Initial load (user is null or a persisted user object)
+    // - After login/logout
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUser(user);
+        // User is authenticated, now listen for their data in Firestore.
+        const userDocRef = doc(db, 'users', user.uid);
+        const unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
+          if (doc.exists()) {
+            setUserData(doc.data() as UserData);
           }
-        }
-      } catch (error) {
-        console.error("Error processing redirect result:", error);
-      }
-
-      // onAuthStateChanged will handle setting the user state for both
-      // initial load and after the redirect has been processed.
-      const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          setUser(user);
-          const userDocRef = doc(db, 'users', user.uid);
-          const unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
-            if (doc.exists()) {
-              setUserData(doc.data() as UserData);
-            }
-            // We have the user and their data (or confirmed it doesn't exist yet)
-            setLoading(false);
-          });
-          return unsubscribeFirestore;
-        } else {
-          // No user is signed in.
-          setUser(null);
-          setUserData(null);
+          // We have the user and their data (or know it doesn't exist yet).
+          // We can stop the main loading screen.
           setLoading(false);
-        }
-      });
-      return unsubscribe;
-    };
+        });
+        return unsubscribeFirestore;
+      } else {
+        // No user is signed in.
+        setUser(null);
+        setUserData(null);
+        setLoading(false);
+      }
+    });
 
-    processAuth();
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
-    await signInWithRedirect(auth, provider);
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      const additionalInfo = getAdditionalUserInfo(result);
+      
+      // Check if this is a new user
+      if (additionalInfo?.isNewUser) {
+        // This is a registration. Create a document in Firestore.
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { 
+          totalPoints: 0, 
+          totalTrees: 0, 
+          displayName: user.displayName, 
+          email: user.email 
+        });
+        sessionStorage.setItem('isNewUser', 'true');
+        toast({
+          title: "✅ Registration Successful",
+          description: `Welcome to ClickBag, ${user.displayName}!`,
+        });
+      } else {
+        // This is a login for an existing user.
+        toast({
+          title: "✅ Login Successful",
+          description: `Welcome back, ${user.displayName}!`,
+        });
+      }
+    } catch (error) {
+      console.error("Google Sign-In Error:", error);
+      // We re-throw the error so the component calling this function
+      // can handle UI states (like loading spinners) and show specific toasts.
+      throw error;
+    }
   };
   
   const signOut = async () => {
-    await auth.signOut();
+    await firebaseSignOut(auth);
   };
 
-
+  // The loading screen is critical. It prevents the app from rendering
+  // a protected page or the login page prematurely, which is the
+  // primary cause of redirect loops and flickering.
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-background">

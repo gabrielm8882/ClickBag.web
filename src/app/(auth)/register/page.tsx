@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -31,6 +31,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useAuth } from '@/hooks/use-auth';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const registerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -44,6 +45,14 @@ export default function RegisterPage() {
   const { toast } = useToast();
   const router = useRouter();
   const { user, signInWithGoogle } = useAuth();
+  const [isInIframe, setIsInIframe] = useState(false);
+
+  useEffect(() => {
+    // Detect if the app is running in an iframe (e.g., Firebase Studio preview)
+    if (window.self !== window.top) {
+      setIsInIframe(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -66,13 +75,8 @@ export default function RegisterPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       await updateProfile(userCredential.user, { displayName: values.name });
 
-      const userDocRef = doc(db, 'users', userCredential.user.uid);
-      await setDoc(userDocRef, { 
-        totalPoints: 0, 
-        totalTrees: 0, 
-        displayName: values.name, 
-        email: values.email 
-      });
+      // The useAuth hook will handle creating the Firestore document.
+      // This is to ensure a single source of truth for user creation.
       
       await sendEmailVerification(userCredential.user);
       
@@ -83,10 +87,14 @@ export default function RegisterPage() {
 
       router.push('/verify-email');
     } catch (error: any) {
+      let description = "An unknown error occurred.";
+      if (error.code === 'auth/email-already-in-use') {
+        description = "This email address is already in use. Please log in or use a different email.";
+      }
       toast({
         variant: 'destructive',
         title: 'Registration failed',
-        description: error.message,
+        description: description,
       });
     } finally {
       setIsLoading(false);
@@ -94,16 +102,23 @@ export default function RegisterPage() {
   };
 
   const handleGoogleSignIn = async () => {
+    if (isInIframe) return; // Prevent action if in iframe
+
     setIsGoogleLoading(true);
     try {
         await signInWithGoogle();
-        // The redirect will happen and useAuth will handle the result.
+        // The useAuth hook will handle the user creation and redirect
     } catch (error: any) {
+        let description = "An unknown error occurred during sign-up.";
+        if (error.code === 'auth/popup-closed-by-user') {
+            description = "The sign-up popup was closed before completing. Please try again.";
+        }
         toast({
             variant: 'destructive',
             title: 'Google Sign-Up Failed',
-            description: error.message,
+            description: description,
         });
+    } finally {
         setIsGoogleLoading(false);
     }
   };
@@ -116,6 +131,19 @@ export default function RegisterPage() {
           Create an account to start turning your purchases into trees.
         </CardDescription>
       </CardHeader>
+
+      {isInIframe && (
+        <div className="px-6 pb-4">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Preview Environment</AlertTitle>
+            <AlertDescription>
+              Google Sign-Up is disabled in the preview. Please open the app in a new tab to use this feature.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <CardContent className="grid gap-4">
@@ -163,7 +191,7 @@ export default function RegisterPage() {
             <Button type="submit" className="w-full shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow" disabled={isLoading || isGoogleLoading}>
               {isLoading ? <Loader2 className="animate-spin" /> : 'Create account'}
             </Button>
-             <Button variant="outline" type="button" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
+             <Button variant="outline" type="button" className="w-full" onClick={handleGoogleSignIn} disabled={isGoogleLoading || isInIframe}>
               {isGoogleLoading ? <Loader2 className="animate-spin" /> : 'Sign up with Google'}
             </Button>
             <div className="mt-4 text-center text-sm w-full">

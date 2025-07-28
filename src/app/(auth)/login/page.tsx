@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -30,6 +30,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useAuth } from '@/hooks/use-auth';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
@@ -42,6 +43,14 @@ export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
   const { user, signInWithGoogle } = useAuth();
+  const [isInIframe, setIsInIframe] = useState(false);
+
+  useEffect(() => {
+    // Detect if the app is running in an iframe (e.g., Firebase Studio preview)
+    if (window.self !== window.top) {
+      setIsInIframe(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -62,12 +71,20 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
+      toast({
+        title: "✅ Login Successful",
+        description: "Welcome back!",
+      });
       router.push('/dashboard');
     } catch (error: any) {
+      let description = "An unknown error occurred.";
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        description = "Invalid email or password. Please try again.";
+      }
       toast({
         variant: 'destructive',
         title: 'Login failed',
-        description: error.message,
+        description: description,
       });
     } finally {
       setIsLoading(false);
@@ -75,17 +92,23 @@ export default function LoginPage() {
   };
 
   const handleGoogleSignIn = async () => {
+    if (isInIframe) return; // Prevent action if in iframe
+
     setIsGoogleLoading(true);
     try {
       await signInWithGoogle();
-      // The redirect will happen and useAuth will handle the result.
-      // We can show a loading state until the redirect happens.
+      // The useAuth hook will handle the redirect upon successful sign-in
     } catch (error: any) {
-        toast({
-            variant: 'destructive',
-            title: 'Google Sign-In Failed',
-            description: error.message,
-        });
+      let description = "An unknown error occurred during sign-in.";
+      if (error.code === 'auth/popup-closed-by-user') {
+        description = "The sign-in popup was closed before completing. Please try again.";
+      }
+      toast({
+          variant: 'destructive',
+          title: 'Google Sign-In Failed',
+          description: description,
+      });
+    } finally {
         setIsGoogleLoading(false);
     }
   };
@@ -98,6 +121,19 @@ export default function LoginPage() {
           Enter your email below to login to your account.
         </CardDescription>
       </CardHeader>
+      
+      {isInIframe && (
+        <div className="px-6 pb-4">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Preview Environment</AlertTitle>
+            <AlertDescription>
+              Google Sign-In is disabled in the preview. Please open the app in a new tab to use this feature.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <CardContent className="grid gap-4">
@@ -132,7 +168,7 @@ export default function LoginPage() {
             <Button type="submit" className="w-full shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow" disabled={isLoading || isGoogleLoading}>
               {isLoading ? <Loader2 className="animate-spin" /> : 'Sign in'}
             </Button>
-            <Button variant="outline" type="button" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
+            <Button variant="outline" type="button" className="w-full" onClick={handleGoogleSignIn} disabled={isGoogleLoading || isInIframe}>
               {isGoogleLoading ? <Loader2 className="animate-spin" /> : 'Sign in with Google'}
             </Button>
             <div className="mt-4 text-center text-sm w-full">
