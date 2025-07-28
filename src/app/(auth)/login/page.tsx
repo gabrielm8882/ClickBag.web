@@ -81,21 +81,11 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
-    try {
-      // Use signInWithRedirect as the sole method for Google sign-in to improve reliability.
-      // This avoids issues with popup blockers and various browser security policies.
-      await signInWithRedirect(auth, provider);
-      // The user will be redirected to the Google sign-in page.
-      // The result is handled by the getRedirectResult() logic in the AuthProvider.
-    } catch (error: any) {
-      // This catch block will handle any errors that occur during the redirect initiation.
-      toast({
-        variant: 'destructive',
-        title: 'Google sign-in failed',
-        description: error.message,
-      });
-      setIsGoogleLoading(false);
-    }
+    // Use signInWithRedirect as the sole method for Google sign-in to improve reliability.
+    // This avoids issues with popup blockers and various browser security policies.
+    await signInWithRedirect(auth, provider);
+    // The user will be redirected to the Google sign-in page.
+    // The result is handled by the getRedirectResult() logic in the AuthProvider.
   };
 
   return (
