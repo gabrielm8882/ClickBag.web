@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy, getDocs, doc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
 import { LeafLoader } from '@/components/ui/leaf-loader';
 import {
   Card,
@@ -35,12 +35,12 @@ interface FullUserData extends UserData {
 interface Submission {
   id: string;
   userId: string;
-  date: any; // Using `any` to avoid timestamp issues, will format later
+  date: any; 
   status: 'Approved' | 'Rejected';
   points: number;
   validationDetails: string;
   geolocation: string;
-  userName?: string; // Will be populated later
+  userName?: string; 
 }
 
 function AnimatedCounter({ endValue }: { endValue: number }) {
@@ -88,69 +88,81 @@ export default function AdminPage() {
     if (!loading) {
       if (!user || !isAdmin) {
         router.push('/login');
+      } else {
+        // If the user is an admin, start loading data.
+        // We will set pageLoading to false after both snapshots are established.
       }
     }
   }, [user, loading, isAdmin, router]);
 
   useEffect(() => {
     if (isAdmin) {
-      setPageLoading(true);
+      let userUnsubscribe: Function;
+      let submissionUnsubscribe: Function;
+      let usersLoaded = false;
+      let submissionsLoaded = false;
 
+      const checkAllDataLoaded = () => {
+        if (usersLoaded && submissionsLoaded) {
+          setPageLoading(false);
+        }
+      };
+      
       const usersQuery = query(collection(db, 'users'), orderBy('totalPoints', 'desc'));
-      const submissionsQuery = query(collection(db, 'submissions'), orderBy('date', 'desc'));
-
-      const unsubscribeUsers = onSnapshot(usersQuery, (querySnapshot) => {
+      userUnsubscribe = onSnapshot(usersQuery, (querySnapshot) => {
         const usersData: FullUserData[] = [];
+        const userMap = new Map<string, string>();
         let points = 0;
         let trees = 0;
         querySnapshot.forEach((doc) => {
           const data = doc.data() as UserData;
-          usersData.push({ id: doc.id, ...data });
+          const fullUserData = { id: doc.id, ...data };
+          usersData.push(fullUserData);
+          userMap.set(doc.id, data.displayName || 'Unknown User');
           points += data.totalPoints || 0;
           trees += data.totalTrees || 0;
         });
         setUsers(usersData);
         setTotalPoints(points);
         setTotalTrees(trees);
+        
+        // This part is important for the submissions to have user names
+        setSubmissions(prevSubmissions => 
+          prevSubmissions.map(sub => ({...sub, userName: userMap.get(sub.userId)}))
+        );
+
+        usersLoaded = true;
+        checkAllDataLoaded();
+      }, (error) => {
+        console.error("Error fetching users:", error);
+        usersLoaded = true;
+        checkAllDataLoaded();
       });
 
-      const unsubscribeSubmissions = onSnapshot(submissionsQuery, async (querySnapshot) => {
-        const submissionsData: Submission[] = [];
-        const userPromises = new Map<string, Promise<any>>();
-
-        const getUserName = async (userId: string) => {
-            if (!userPromises.has(userId)) {
-                userPromises.set(userId, getDocs(query(collection(db, 'users'), where('__name__', '==', userId))));
-            }
-            const userDocRef = doc(db, 'users', userId);
-            const userDoc = await getDocs(query(collection(db, 'users'), where('__name__', '==', userId)));
-
-            if (!userDoc.empty) {
-                return userDoc.docs[0].data().displayName || 'Unknown User';
-            }
-            return 'Unknown User';
-        };
+      const submissionsQuery = query(collection(db, 'submissions'), orderBy('date', 'desc'));
+      submissionUnsubscribe = onSnapshot(submissionsQuery, (querySnapshot) => {
+        const submissionsData: Submission[] = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+        } as Submission));
         
-        for (const doc of querySnapshot.docs) {
-            const data = doc.data();
-            const userName = await getUserName(data.userId);
-            submissionsData.push({
-                id: doc.id,
-                ...data,
-                userName: userName,
-            } as Submission);
-        }
-        
+        // At this point, we might not have the users yet, so we'll map names later or rely on the user snapshot to fill them in.
         setSubmissions(submissionsData);
-        setPageLoading(false);
+        submissionsLoaded = true;
+        checkAllDataLoaded();
+      }, (error) => {
+        console.error("Error fetching submissions:", error);
+        submissionsLoaded = true;
+        checkAllDataLoaded();
       });
 
       return () => {
-        unsubscribeUsers();
-        unsubscribeSubmissions();
+        if (userUnsubscribe) userUnsubscribe();
+        if (submissionUnsubscribe) submissionUnsubscribe();
       };
     }
   }, [isAdmin]);
+
 
   if (loading || pageLoading) {
     return (
@@ -162,13 +174,13 @@ export default function AdminPage() {
   }
 
   if (!isAdmin) {
-    return null; // or a dedicated "Access Denied" component
+    return null; 
   }
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <div className="flex items-center gap-4 mb-8">
-        <Shield className="h-10 w-10 text-blue-500" />
+        <Shield className="h-10 w-10 text-accent" />
         <h1 className="font-headline text-3xl md:text-4xl font-bold">
           Admin Dashboard
         </h1>
@@ -241,7 +253,7 @@ export default function AdminPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {users.map((u) => (
+                    {users.length > 0 ? users.map((u) => (
                     <TableRow key={u.id}>
                         <TableCell>
                             <div className="font-medium">{u.displayName}</div>
@@ -250,7 +262,11 @@ export default function AdminPage() {
                         <TableCell className="text-right font-mono">{u.totalPoints}</TableCell>
                         <TableCell className="text-right font-mono">{u.totalTrees}</TableCell>
                     </TableRow>
-                    ))}
+                    )) : (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-muted-foreground">No users yet.</TableCell>
+                      </TableRow>
+                    )}
                 </TableBody>
                 </Table>
             </CardContent>
@@ -278,10 +294,10 @@ export default function AdminPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {submissions.map((submission) => (
+                    {submissions.length > 0 ? submissions.map((submission) => (
                     <TableRow key={submission.id}>
-                        <TableCell className="font-medium">{submission.userName}</TableCell>
-                        <TableCell>{format(submission.date.toDate(), 'PPp')}</TableCell>
+                        <TableCell className="font-medium">{submission.userName || 'Loading...'}</TableCell>
+                        <TableCell>{submission.date ? format(submission.date.toDate(), 'PPp') : 'N/A'}</TableCell>
                         <TableCell>
                             <Badge
                                 variant={submission.status === 'Approved' ? 'default' : 'destructive'}
@@ -292,7 +308,11 @@ export default function AdminPage() {
                             </Badge>
                         </TableCell>
                     </TableRow>
-                    ))}
+                    )) : (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-muted-foreground">No submissions yet.</TableCell>
+                      </TableRow>
+                    )}
                 </TableBody>
                 </Table>
             </CardContent>
@@ -302,4 +322,3 @@ export default function AdminPage() {
     </div>
   );
 }
-

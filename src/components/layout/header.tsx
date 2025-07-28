@@ -133,7 +133,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <div className="flex items-center gap-2 cursor-pointer">
                    {isAdmin ? (
-                       <Shield className="h-5 w-5 text-blue-500" />
+                       <Shield className="h-5 w-5 text-accent" />
                    ) : userData && userData.totalPoints > 0 && (
                       <Crown className="h-5 w-5 text-accent" />
                    )}
