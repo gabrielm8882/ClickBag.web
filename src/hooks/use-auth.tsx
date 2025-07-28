@@ -34,18 +34,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    // This is the core logic. It runs only once on mount.
-    // It checks for a redirect result AND sets up the auth state listener.
     const processAuth = async () => {
       try {
         const result = await getRedirectResult(auth);
         if (result) {
-          // User has just signed in via redirect.
           const userDocRef = doc(db, 'users', result.user.uid);
           const docSnap = await getDoc(userDocRef);
 
           if (!docSnap.exists()) {
-            // This is a new user registration.
             await setDoc(userDocRef, {
               totalPoints: 0,
               totalTrees: 0,
@@ -58,17 +54,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               description: `Welcome to ClickBag, ${result.user.displayName}!`,
             });
           } else {
-            // This is an existing user login.
              toast({
               title: "✅ Login Successful",
               description: `Welcome back, ${result.user.displayName}!`,
             });
           }
-          // No need to call setLoading(false) here, onAuthStateChanged will handle it.
         }
       } catch (error: any) {
         console.error("Error processing redirect result:", error);
-        // Avoid showing an error for "no-auth-event" which happens on every normal page load.
         if (error.code !== 'auth/no-auth-event') {
           toast({
             variant: 'destructive',
@@ -76,46 +69,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             description: 'Could not complete sign-in. Please try again.',
           });
         }
-      }
-
-      // After processing a potential redirect, set up the permanent listener.
-      // This listener will keep the user state in sync for the entire session.
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user) {
-          setUser(user);
-          // Set up a real-time listener for user data
-          const userDocRef = doc(db, 'users', user.uid);
-          onSnapshot(userDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-              setUserData(docSnap.data() as UserData);
-            }
-            // We are confident about the user's state here.
+      } finally {
+        // This is now the single source of truth for auth state.
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          if (user) {
+            setUser(user);
+            const userDocRef = doc(db, 'users', user.uid);
+            const unsubUserData = onSnapshot(userDocRef, (docSnap) => {
+              if (docSnap.exists()) {
+                setUserData(docSnap.data() as UserData);
+              } else {
+                // If the doc doesn't exist for some reason, maybe it's still being created.
+                // We don't want to show a broken state. We can keep userData as null.
+                setUserData(null);
+              }
+              setLoading(false);
+            }, (error) => {
+              console.error("Error with user data snapshot:", error);
+              setUserData(null);
+              setLoading(false);
+            });
+            // Cleanup the user data listener when the auth state changes
+            return () => unsubUserData();
+          } else {
+            setUser(null);
+            setUserData(null);
             setLoading(false);
-          });
-        } else {
-          setUser(null);
-          setUserData(null);
-          // No user, we can stop loading.
-          setLoading(false);
-        }
-      });
-      
-      return unsubscribe;
+          }
+        });
+
+        return () => unsubscribe();
+      }
     };
 
     processAuth();
     
-    // The cleanup function for the useEffect will be handled by returning the unsubscribe function from onAuthStateChanged
-  }, []); // The empty dependency array is CRITICAL to ensure this runs only once.
+  }, []); 
 
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      // Set loading to true immediately to show loader while redirecting.
       setLoading(true); 
       await signInWithRedirect(auth, provider);
-      // The page will redirect, so no further code here will execute.
     } catch (error) {
       console.error("Google Sign-In Error:", error);
       toast({
@@ -123,7 +119,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: 'Google Sign-In Failed',
         description: 'Could not start the sign-in process. Please try again.',
       });
-      // Reset loading state on error if redirect fails.
       setLoading(false); 
     }
   };
@@ -133,9 +128,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/');
   };
 
-  // This loading screen is the most important part of the fix.
-  // It prevents the rest of the app from rendering until Firebase has
-  // confirmed the user's authentication state, thus preventing the redirect loop.
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-background">

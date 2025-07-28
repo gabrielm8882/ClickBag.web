@@ -8,7 +8,8 @@ import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -65,7 +66,16 @@ export default function RegisterPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       await updateProfile(userCredential.user, { displayName: values.name });
 
-      // The useAuth hook will handle creating the Firestore document.
+      // Explicitly create the user document in Firestore upon registration
+      const userDocRef = doc(db, 'users', userCredential.user.uid);
+      await setDoc(userDocRef, {
+        totalPoints: 0,
+        totalTrees: 0,
+        displayName: values.name,
+        email: values.email,
+      });
+      
+      sessionStorage.setItem('isNewUser', 'true');
       
       await sendEmailVerification(userCredential.user);
       
