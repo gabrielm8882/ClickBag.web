@@ -176,7 +176,7 @@ export default function DashboardPage() {
               Privacy and data information
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center pt-2">
-              Welcome to ClickBag! Please note that photos you upload are temporarily stored for validation and project-related purposes. We are committed to your privacy and only gather data you explicitly provide and agree to.
+              Welcome to ClickBag! Please note that photos you upload are temporarily stored for validation and project-related purposes. Your submission history is stored indefinitely to track your contributions. We are committed to your privacy and only gather data you explicitly provide and agree to.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

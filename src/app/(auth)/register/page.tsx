@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ShieldCheck } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -28,6 +28,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useAuth } from '@/hooks/use-auth';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const registerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -103,6 +104,12 @@ export default function RegisterPage() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <CardContent className="grid gap-4">
+             <Alert className="bg-blue-50 border-blue-200 text-blue-800">
+                <ShieldCheck className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-xs">
+                    By registering, you agree that your submission history (date, status, and validation details) and a temporary, anonymized version of your uploaded photos will be stored to prevent fraud and improve our service.
+                </AlertDescription>
+            </Alert>
             <FormField
               control={form.control}
               name="name"
