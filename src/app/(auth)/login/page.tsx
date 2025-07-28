@@ -80,19 +80,9 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
-    try {
-      await signInWithGoogle();
-      // The redirect will happen, and useAuth will handle the result.
-    } catch (error: any) {
-      // This will only catch errors that prevent the redirect from starting.
-      toast({
-          variant: 'destructive',
-          title: 'Google Sign-In Failed',
-          description: "Could not initiate Google Sign-In. Please check your connection and try again.",
-      });
-      setIsGoogleLoading(false);
-    }
-    // No need to set isLoading to false if redirect starts, as the page will unload.
+    await signInWithGoogle();
+    // The useAuth hook will handle showing a loading state while the redirect happens.
+    // We don't set isGoogleLoading to false, as the page will unload.
   };
 
   return (

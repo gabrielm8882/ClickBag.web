@@ -34,20 +34,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const processRedirectResult = async () => {
+    const processRedirect = async () => {
       try {
         const result = await getRedirectResult(auth);
         if (result) {
-          // This is the first sign-in for this user.
           const userDocRef = doc(db, 'users', result.user.uid);
           const docSnap = await getDoc(userDocRef);
 
           if (!docSnap.exists()) {
-            await setDoc(userDocRef, { 
-              totalPoints: 0, 
-              totalTrees: 0, 
-              displayName: result.user.displayName, 
-              email: result.user.email 
+            await setDoc(userDocRef, {
+              totalPoints: 0,
+              totalTrees: 0,
+              displayName: result.user.displayName,
+              email: result.user.email,
             });
             sessionStorage.setItem('isNewUser', 'true');
             toast({
@@ -55,7 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               description: `Welcome to ClickBag, ${result.user.displayName}!`,
             });
           } else {
-             toast({
+            toast({
               title: "✅ Login Successful",
               description: `Welcome back, ${result.user.displayName}!`,
             });
@@ -63,47 +62,52 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           router.push('/dashboard');
         }
       } catch (error: any) {
-        console.error("Error processing redirect result:", error);
-        if (error.code !== 'auth/no-auth-event') {
-          toast({
-            variant: 'destructive',
-            title: 'Authentication Error',
-            description: 'Could not complete sign-in. Please try again.',
-          });
-        }
+         console.error("Error processing redirect result:", error);
+         // Don't toast for "no-auth-event", which happens on every page load without a redirect.
+         if (error.code !== 'auth/no-auth-event') {
+            toast({
+              variant: 'destructive',
+              title: 'Authentication Error',
+              description: 'Could not complete sign-in. Please try again.',
+            });
+         }
       }
     };
-    
-    // Process redirect result before setting up the listener
-    processRedirectResult().finally(() => {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user) {
-          setUser(user);
-          const userDocRef = doc(db, 'users', user.uid);
-          const unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
-            if (doc.exists()) {
-              setUserData(doc.data() as UserData);
-            }
-            setLoading(false);
-          });
-          return unsubscribeFirestore;
-        } else {
-          setUser(null);
-          setUserData(null);
+
+    // This is the main listener that ensures the app state is always in sync with Firebase's auth state.
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setUser(user);
+        const userDocRef = doc(db, 'users', user.uid);
+        onSnapshot(userDocRef, (docSnap) => {
+          if (docSnap.exists()) {
+            setUserData(docSnap.data() as UserData);
+          }
+           // Once user and data are set, we can stop loading.
           setLoading(false);
-        }
-      });
-      
-      return () => unsubscribe();
+        });
+      } else {
+        setUser(null);
+        setUserData(null);
+        // Also stop loading if there's no user.
+        setLoading(false);
+      }
     });
-    
-  }, [toast, router]);
+
+    // We process the redirect first, then let the onAuthStateChanged listener take over.
+    processRedirect();
+
+    // Cleanup the listener on unmount
+    return () => unsubscribe();
+  }, []); // The empty dependency array ensures this runs only once on mount.
+
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     try {
       // The redirect will cause the page to unload, so we don't need to handle success here.
       // The `useEffect` hook will handle the result when the user is redirected back.
+      setLoading(true); // Set loading to true to show loader while redirecting
       await signInWithRedirect(auth, provider);
     } catch (error) {
       console.error("Google Sign-In Error:", error);
@@ -112,14 +116,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: 'Google Sign-In Failed',
         description: 'Could not start the sign-in process. Please try again.',
       });
+      setLoading(false); // Reset loading state on error
     }
   };
   
   const signOut = async () => {
     await firebaseSignOut(auth);
-    // No need to redirect here, the onAuthStateChanged listener will handle it.
+    // onAuthStateChanged will handle the user state update.
+    router.push('/');
   };
 
+  // The loading screen is crucial. It prevents the app from rendering the wrong state
+  // while Firebase is initializing and checking the auth status.
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-background">

@@ -66,7 +66,6 @@ export default function RegisterPage() {
       await updateProfile(userCredential.user, { displayName: values.name });
 
       // The useAuth hook will handle creating the Firestore document.
-      // This is to ensure a single source of truth for user creation.
       
       await sendEmailVerification(userCredential.user);
       
@@ -93,19 +92,9 @@ export default function RegisterPage() {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
-    try {
-        await signInWithGoogle();
-        // The redirect will happen, and useAuth will handle the result.
-    } catch (error: any) {
-        // This will only catch errors that prevent the redirect from starting.
-        toast({
-            variant: 'destructive',
-            title: 'Google Sign-Up Failed',
-            description: "Could not initiate Google Sign-Up. Please check your connection and try again.",
-        });
-        setIsGoogleLoading(false);
-    }
-    // No need to set isLoading to false if redirect starts, as the page will unload.
+    await signInWithGoogle();
+    // The useAuth hook will handle showing a loading state while the redirect happens.
+    // We don't set isGoogleLoading to false, as the page will unload.
   };
 
   return (
