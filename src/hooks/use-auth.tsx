@@ -11,8 +11,7 @@ import {
   sendEmailVerification,
   signInWithEmailAndPassword,
   GoogleAuthProvider,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   getAdditionalUserInfo,
   setPersistence,
   browserLocalPersistence
@@ -48,117 +47,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    let unsubscribeSnapshot: () => void = () => {};
+    let unsubscribeSnapshot: (() => void) | null = null;
 
-    const initializeAuth = async () => {
-      try {
-        await setPersistence(auth, browserLocalPersistence);
-
-        console.log("Auth object before getRedirectResult:", auth);
-        console.log("Session storage keys before getRedirectResult:", Object.keys(sessionStorage));
-
-        const result = await getRedirectResult(auth);
-        
-        console.log("Auth object after getRedirectResult:", auth);
-        console.log("Session storage keys after getRedirectResult:", Object.keys(sessionStorage));
-
-
-        if (result?.user) {
-          console.log("✅ Signed in via Google redirect:", result.user);
-          const currentUser = result.user;
-          setUser(currentUser);
-          
-          const isNew = getAdditionalUserInfo(result)?.isNewUser;
-          const userDocRef = doc(db, 'users', currentUser.uid);
-
-          if (isNew) {
-            console.log("New user detected via redirect, creating Firestore document.");
-            await setDoc(userDocRef, {
-              displayName: currentUser.displayName,
-              email: currentUser.email,
-              totalPoints: 0,
-              totalTrees: 0,
-            }, { merge: true });
-            sessionStorage.setItem('isNewUser', 'true');
-          } else {
-             const userDoc = await getDoc(userDocRef);
-             if (!userDoc.exists()) {
-                console.log("Existing user with no Firestore doc, creating one.");
-                await setDoc(userDocRef, {
-                    displayName: currentUser.displayName,
-                    email: currentUser.email,
-                    totalPoints: 0,
-                    totalTrees: 0,
-                }, { merge: true });
-             }
-          }
-
-          unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-              setUserData(docSnap.data() as UserData);
-            }
-          });
-
-          setLoading(false);
-          router.push('/dashboard');
-          return; // Stop execution to avoid attaching onAuthStateChanged unnecessarily
-        }
-
-        // If no redirect result, set up the regular auth state listener
-        const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
-          if (currentUser) {
-            if (user?.uid !== currentUser.uid) { // Prevent re-running for the same user
-              setUser(currentUser);
-              
-              const userDocRef = doc(db, 'users', currentUser.uid);
-              const userDoc = await getDoc(userDocRef);
-              if (!userDoc.exists()) {
-                 console.log("Existing user with no Firestore doc, creating one.");
-                 await setDoc(userDocRef, {
-                    displayName: currentUser.displayName,
-                    email: currentUser.email,
-                    totalPoints: 0,
-                    totalTrees: 0,
-                 }, { merge: true });
-              }
-
-              unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                  setUserData(docSnap.data() as UserData);
-                }
-              });
-            }
-          } else {
-            setUser(null);
-            setUserData(null);
-          }
-          setLoading(false);
-        });
-
-        return () => {
-          unsubscribeAuth();
-          if (unsubscribeSnapshot) {
-            unsubscribeSnapshot();
-          }
-        };
-
-      } catch (error) {
-        console.error("❌ Auth initialization error:", error);
-        setLoading(false);
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
       }
-    };
 
-    const cleanupPromise = initializeAuth();
+      if (currentUser) {
+        setUser(currentUser);
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        
+        unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
+          if (docSnap.exists()) {
+            setUserData(docSnap.data() as UserData);
+          } else {
+            // This case can happen if a user was deleted from Firestore but not Auth.
+            // We can re-create their doc here if needed.
+             setDoc(userDocRef, {
+                displayName: currentUser.displayName,
+                email: currentUser.email,
+                totalPoints: 0,
+                totalTrees: 0,
+            }, { merge: true });
+          }
+        });
+      } else {
+        setUser(null);
+        setUserData(null);
+      }
+      setLoading(false);
+    });
 
     return () => {
-      cleanupPromise.then(cleanup => {
-        if (typeof cleanup === 'function') {
-          cleanup();
-        }
-      });
+      unsubscribeAuth();
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+      }
     };
   }, []);
-
 
   const signOut = async () => {
     await firebaseSignOut(auth);
@@ -191,7 +119,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
-    await signInWithRedirect(auth, provider);
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const currentUser = result.user;
+        const isNew = getAdditionalUserInfo(result)?.isNewUser;
+        
+        if (isNew) {
+            console.log("New user detected via popup, creating Firestore document.");
+            const userDocRef = doc(db, 'users', currentUser.uid);
+            await setDoc(userDocRef, {
+              displayName: currentUser.displayName,
+              email: currentUser.email,
+              totalPoints: 0,
+              totalTrees: 0,
+            }, { merge: true });
+            sessionStorage.setItem('isNewUser', 'true');
+        }
+        // For existing users, onAuthStateChanged will handle the data loading.
+        // The router.push in the login/register page useEffect will handle navigation.
+    } catch (error) {
+        console.error("Google Sign-In with popup failed:", error);
+        // Let the calling component handle UI feedback (e.g., a toast).
+        throw error;
+    }
   };
 
   if (loading) {

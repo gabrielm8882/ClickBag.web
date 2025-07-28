@@ -78,13 +78,14 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithGoogle();
-      // The redirect flow is handled by the useAuth hook
+      // The useAuth hook's onAuthStateChanged will handle the redirect.
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Google Sign-In Failed',
         description: error.message || 'An unknown error occurred.',
       });
+    } finally {
       setIsLoading(false);
     }
   };

@@ -9,12 +9,6 @@
     ],
     "frameworksBackend": {
       "region": "us-central1"
-    },
-    "rewrites": [
-      {
-        "source": "/__/auth/**",
-        "destination": "/__/auth/index.html"
-      }
-    ]
+    }
   }
 }

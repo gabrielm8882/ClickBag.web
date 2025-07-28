@@ -79,12 +79,14 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       await signInWithGoogle();
+      // The useAuth hook's onAuthStateChanged will handle the redirect.
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Google Sign-Up Failed',
         description: error.message || 'An unknown error occurred.',
       });
+    } finally {
       setIsLoading(false);
     }
   };
