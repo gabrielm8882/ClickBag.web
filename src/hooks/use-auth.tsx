@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { 
   onAuthStateChanged, 
   User, 
@@ -16,7 +16,7 @@ import {
   getAdditionalUserInfo
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { LeafLoader } from '@/components/ui/leaf-loader';
 import { useRouter } from 'next/navigation';
 
@@ -33,7 +33,7 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<any>;
-  registerWithEmail: (name: string, email: string, password: string) => Promise<any>;
+  registerWithEmail: (name: string, email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
 }
 
@@ -46,17 +46,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    // This combined effect handles all authentication state changes.
-    // It's structured to prevent race conditions during redirects.
     const processAuth = async () => {
       try {
-        // First, check if there's a result from a redirect sign-in
+        // First, check for the result of a redirect sign-in.
+        // This promise resolves to null if the page is not loaded after a redirect.
         const result = await getRedirectResult(auth);
         
         if (result) {
-          // If a user is new, create their Firestore document.
+          // User has signed in via redirect.
           const isNewUser = getAdditionalUserInfo(result)?.isNewUser;
           if (isNewUser) {
+            // If it's a new user, create their Firestore document.
             const userDocRef = doc(db, 'users', result.user.uid);
             await setDoc(userDocRef, {
               displayName: result.user.displayName,
@@ -66,30 +66,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             });
             sessionStorage.setItem('isNewUser', 'true');
           }
-          // The onAuthStateChanged listener below will handle setting the user state.
+          // The onAuthStateChanged listener below will handle setting the user state
+          // and redirecting to the dashboard. The loading state prevents a race condition.
         }
       } catch (error) {
         console.error("Error processing redirect result:", error);
+        // Let the onAuthStateChanged listener handle the final state.
       }
 
-      // Set up the primary listener for auth state.
-      // This will fire after the redirect is processed OR for any other auth change.
+      // Now, set up the onAuthStateChanged listener. This will run after getRedirectResult
+      // has been processed, or on initial page load if there was no redirect.
       const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
         if (currentUser) {
           setUser(currentUser);
-          // Fetch associated user data from Firestore
           const userDocRef = doc(db, 'users', currentUser.uid);
+          // Set up a snapshot listener for real-time user data updates.
           const unsubSnapshot = onSnapshot(userDocRef, (docSnap) => {
             if (docSnap.exists()) {
               setUserData(docSnap.data() as UserData);
             } else {
-              setUserData(null);
+              // This can happen if a user is created in Auth but their Firestore doc fails.
+              // We can attempt to create it here as a fallback.
+              console.log("User document doesn't exist, creating it now.");
+              setDoc(userDocRef, {
+                displayName: currentUser.displayName,
+                email: currentUser.email,
+                totalPoints: 0,
+                totalTrees: 0,
+              });
             }
-            // Only stop loading after user and user data are confirmed.
+            // Stop loading only after we have user and user data.
             setLoading(false);
           });
-          // Note: Returning the snapshot listener for cleanup is complex here.
-          // The main auth unsubscribe handles the primary cleanup.
+          // Note: Returning the snapshot listener is complex here; the main unsubscribe handles cleanup.
         } else {
           // No user is signed in.
           setUser(null);
@@ -104,8 +113,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     processAuth();
     
-  }, []); 
-  
+  }, []);
+
   const signOut = async () => {
     await firebaseSignOut(auth);
     // onAuthStateChanged will handle the state update and trigger re-render
@@ -119,7 +128,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName: name });
     
-    // Create the user document in Firestore immediately upon registration
+    // Create the user document in Firestore immediately upon registration.
     const userDocRef = doc(db, 'users', userCredential.user.uid);
     await setDoc(userDocRef, {
       displayName: name,
@@ -139,7 +148,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Use signInWithRedirect for a more robust flow that works in all environments.
     await signInWithRedirect(auth, provider);
   };
-
 
   if (loading) {
     return (
