@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Leaf, LogOut, User as UserIcon, Menu, Crown } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import {
   DropdownMenu,
@@ -27,8 +28,12 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
-    await auth.signOut();
-    router.push('/');
+    try {
+      await signOut(auth);
+      router.push('/');
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
   };
 
   const getInitials = (name: string | null | undefined) => {
@@ -122,7 +127,7 @@ export function Header() {
           {user ? (
               <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 cursor-pointer">
                    {userData && userData.totalPoints > 0 && (
                       <Crown className="h-5 w-5 text-accent" />
                    )}
@@ -150,7 +155,7 @@ export function Header() {
                     <span>Dashboard</span>
                   </DropdownMenuItem>
                 </Link>
-                <DropdownMenuItem onClick={handleSignOut}>
+                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>
