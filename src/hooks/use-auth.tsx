@@ -18,7 +18,7 @@ import {
   browserLocalPersistence
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
 import { LeafLoader } from '@/components/ui/leaf-loader';
 import { useRouter } from 'next/navigation';
 
@@ -48,26 +48,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    let unsubscribeAuth: () => void;
-    let unsubscribeSnapshot: () => void = () => {}; // Initialize with a no-op function
+    let unsubscribeSnapshot: () => void = () => {};
 
     const initializeAuth = async () => {
       try {
-        console.log("Attempting to initialize authentication.");
         await setPersistence(auth, browserLocalPersistence);
-        console.log("Auth persistence set to browserLocalPersistence.");
 
-        // Await redirect result first
-        console.log("Checking for redirect result...");
-        const redirectResult = await getRedirectResult(auth);
-        console.log("Redirect result:", redirectResult);
+        console.log("Auth object before getRedirectResult:", auth);
+        console.log("Session storage keys before getRedirectResult:", Object.keys(sessionStorage));
 
-        if (redirectResult?.user) {
-          console.log("✅ Signed in via Google redirect:", redirectResult.user);
-          const currentUser = redirectResult.user;
+        const result = await getRedirectResult(auth);
+        
+        console.log("Auth object after getRedirectResult:", auth);
+        console.log("Session storage keys after getRedirectResult:", Object.keys(sessionStorage));
+
+
+        if (result?.user) {
+          console.log("✅ Signed in via Google redirect:", result.user);
+          const currentUser = result.user;
           setUser(currentUser);
-
-          const isNew = getAdditionalUserInfo(redirectResult)?.isNewUser;
+          
+          const isNew = getAdditionalUserInfo(result)?.isNewUser;
           const userDocRef = doc(db, 'users', currentUser.uid);
 
           if (isNew) {
@@ -79,76 +80,84 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               totalTrees: 0,
             }, { merge: true });
             sessionStorage.setItem('isNewUser', 'true');
+          } else {
+             const userDoc = await getDoc(userDocRef);
+             if (!userDoc.exists()) {
+                console.log("Existing user with no Firestore doc, creating one.");
+                await setDoc(userDocRef, {
+                    displayName: currentUser.displayName,
+                    email: currentUser.email,
+                    totalPoints: 0,
+                    totalTrees: 0,
+                }, { merge: true });
+             }
           }
 
-          // Set up listener for user data
           unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
             if (docSnap.exists()) {
               setUserData(docSnap.data() as UserData);
             }
-            console.log("Snapshot listener set up for user data.");
-            // Navigation will happen after loading is set to false
           });
 
           setLoading(false);
-          console.log("Loading set to false after redirect sign-in.");
           router.push('/dashboard');
-
-        } else {
-          // No redirect result, set up the regular auth state listener
-          console.log("No redirect result found. Setting up onAuthStateChanged listener.");
-          unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
-            console.log("Auth state changed:", currentUser);
-            if (currentUser) {
-              console.log("✅ User signed in:", currentUser);
-              setUser(currentUser);
-              const userDocRef = doc(db, 'users', currentUser.uid);
-              // Set up listener for user data
-              unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
-                  if (docSnap.exists()) {
-                      setUserData(docSnap.data() as UserData);
-                  }
-                  console.log("Snapshot listener set up for user data after state change.");
-                  // Navigation will happen after loading is set to false
-              });
-
-              setLoading(false);
-              console.log("Loading set to false after auth state change.");
-              router.push('/dashboard');
-
-            } else {
-              console.log("🕒 No user signed in.");
-              setUser(null);
-              setUserData(null);
-              setLoading(false);
-              console.log("Loading set to false as no user is signed in.");
-              // Stay on the current page (presumably login if not authenticated)
-            }
-          });
+          return; // Stop execution to avoid attaching onAuthStateChanged unnecessarily
         }
+
+        // If no redirect result, set up the regular auth state listener
+        const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+          if (currentUser) {
+            if (user?.uid !== currentUser.uid) { // Prevent re-running for the same user
+              setUser(currentUser);
+              
+              const userDocRef = doc(db, 'users', currentUser.uid);
+              const userDoc = await getDoc(userDocRef);
+              if (!userDoc.exists()) {
+                 console.log("Existing user with no Firestore doc, creating one.");
+                 await setDoc(userDocRef, {
+                    displayName: currentUser.displayName,
+                    email: currentUser.email,
+                    totalPoints: 0,
+                    totalTrees: 0,
+                 }, { merge: true });
+              }
+
+              unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                  setUserData(docSnap.data() as UserData);
+                }
+              });
+            }
+          } else {
+            setUser(null);
+            setUserData(null);
+          }
+          setLoading(false);
+        });
+
+        return () => {
+          unsubscribeAuth();
+          if (unsubscribeSnapshot) {
+            unsubscribeSnapshot();
+          }
+        };
 
       } catch (error) {
         console.error("❌ Auth initialization error:", error);
         setLoading(false);
-        console.log("Loading set to false due to initialization error.");
-        // Handle error, potentially redirect to a generic error page or show a message
       }
     };
 
-    initializeAuth();
+    const cleanupPromise = initializeAuth();
 
-    // Cleanup function for useEffect
     return () => {
-      console.log("Cleaning up auth listeners.");
-      if (unsubscribeAuth) { // Check if unsubscribeAuth was assigned
-        unsubscribeAuth();
-      }
-      if (unsubscribeSnapshot) { // Check if unsubscribeSnapshot was assigned
-         unsubscribeSnapshot();
-      }
+      cleanupPromise.then(cleanup => {
+        if (typeof cleanup === 'function') {
+          cleanup();
+        }
+      });
     };
-
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, []);
 
 
   const signOut = async () => {
@@ -165,7 +174,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const registerWithEmail = async (name: string, email: string, password: string) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName: name });
-
+    
     const userDocRef = doc(db, 'users', userCredential.user.uid);
     await setDoc(userDocRef, {
       displayName: name,
@@ -173,21 +182,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       totalPoints: 0,
       totalTrees: 0,
     });
-
+    
     sessionStorage.setItem('isNewUser', 'true');
     await sendEmailVerification(userCredential.user);
-
+    
     router.push('/verify-email');
   };
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
-    console.log("Attempting Google sign-in with redirect.");
-    // No need to await or handle navigation here, redirect will happen automatically
     await signInWithRedirect(auth, provider);
   };
 
-  // Don't render children until authentication state is determined
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-background">
@@ -211,4 +217,3 @@ export const useAuth = (): AuthContextType => {
     }
     return context;
 };
-
