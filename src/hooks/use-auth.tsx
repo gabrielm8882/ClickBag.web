@@ -1,5 +1,5 @@
 
-"use client";
+'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, User, getRedirectResult, getAdditionalUserInfo } from 'firebase/auth';
@@ -32,69 +32,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // This is the canonical way to handle auth state changes and redirects.
-    // onAuthStateChanged fires once on initial load, and again whenever auth state changes.
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        // If we have a user, set up a real-time listener for their data.
-        const userDocRef = doc(db, 'users', currentUser.uid);
-        const unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
-          if (doc.exists()) {
-            setUserData(doc.data() as UserData);
-          } else {
-            // This case can happen for a brand new user.
-            setUserData({ totalPoints: 0, totalTrees: 0 });
-          }
-        });
-
-        // Make sure to clean up the Firestore listener when the auth state changes.
-        auth.onAuthStateChanged((user) => {
-          if (!user) unsubscribeFirestore();
-        });
-
-      } else {
-        // No user, clear user data.
-        setUserData(null);
-      }
-      
-      // We are no longer in a loading state.
-      setLoading(false);
-    });
-
-    // Check for redirect result on initial load.
-    // This should only run once.
-    getRedirectResult(auth)
-      .then(async (result) => {
+    const processRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
         if (result) {
           toast({
             title: "✅ Login Successful",
             description: `Welcome back, ${result.user.displayName}!`,
           });
-          // This means a user has just signed in via redirect.
+          
           const additionalInfo = getAdditionalUserInfo(result);
           if (additionalInfo?.isNewUser) {
             sessionStorage.setItem('isNewUser', 'true');
-            // If the user is new, we must create their document in Firestore.
             const userDocRef = doc(db, 'users', result.user.uid);
-            // Use getDoc to avoid race condition with the onSnapshot listener.
             const docSnap = await getDoc(userDocRef);
             if (!docSnap.exists()) {
               await setDoc(userDocRef, { totalPoints: 0, totalTrees: 0 });
             }
           }
         }
-      })
-      .catch((error) => {
-        console.error("Error during getRedirectResult:", error);
-        toast({
-            variant: "destructive",
-            title: "Authentication Error",
-            description: "Could not complete the sign-in process. Please try again.",
-        });
-      });
+      } catch (error: any) {
+         console.error("Error during getRedirectResult:", error);
+         toast({
+             variant: "destructive",
+             title: "Authentication Error",
+             description: "Could not complete the sign-in process. Please try again.",
+         });
+      }
+    };
 
-    // Cleanup subscription on unmount
+    processRedirect();
+
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
+          setUserData(doc.exists() ? (doc.data() as UserData) : { totalPoints: 0, totalTrees: 0 });
+          setLoading(false);
+        }, (error) => {
+            console.error("Error fetching user data:", error);
+            setLoading(false);
+        });
+        
+        return () => unsubscribeFirestore();
+      } else {
+        setUserData(null);
+        setLoading(false);
+      }
+    });
+
     return () => unsubscribe();
   }, [toast]);
 

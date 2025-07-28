@@ -86,8 +86,6 @@ export default function RegisterPage() {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
-    // Use signInWithRedirect as the sole method for Google Sign-Up
-    // to ensure reliability across all browsers and avoid popup-related issues.
     try {
       const provider = new GoogleAuthProvider();
       await signInWithRedirect(auth, provider);
