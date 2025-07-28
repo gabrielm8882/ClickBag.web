@@ -1,13 +1,13 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithRedirect, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -29,7 +29,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
@@ -39,16 +38,8 @@ const loginSchema = z.object({
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [isIframe, setIsIframe] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
-
-  useEffect(() => {
-    // Detect if the app is running in an iframe (e.g., Firebase Studio preview)
-    if (typeof window !== 'undefined' && window.self !== window.top) {
-      setIsIframe(true);
-    }
-  }, []);
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -76,60 +67,11 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
-    try {
-      const provider = new GoogleAuthProvider();
-      // Use signInWithPopup for a more direct login flow that avoids redirect issues.
-      const result = await signInWithPopup(auth, provider);
-      
-      toast({
-        title: "✅ Login Successful",
-        description: `Welcome back, ${result.user.displayName}!`,
-      });
-      router.push('/dashboard');
-    } catch (error: any) {
-      let description = "An unknown error occurred.";
-      // Provide clearer error messages for common popup-related issues.
-      if (error.code === 'auth/popup-closed-by-user') {
-        description = "The sign-in popup was closed before completing the process. Please try again.";
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        description = "Multiple sign-in popups were opened. Please try again."
-      } else {
-        description = error.message;
-      }
-      toast({
-        variant: 'destructive',
-        title: 'Google Sign-in failed',
-        description: description,
-      });
-    } finally {
-      setIsGoogleLoading(false);
-    }
+    const provider = new GoogleAuthProvider();
+    // Use signInWithRedirect as the most reliable method.
+    // The useAuth hook will handle the redirect result.
+    await signInWithRedirect(auth, provider);
   };
-  
-  if (isIframe) {
-    return (
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl font-headline">Preview Mode</CardTitle>
-          <CardDescription>
-            Authentication needs to be tested in a separate window.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Authentication Notice</AlertTitle>
-            <AlertDescription>
-              To test Google Sign-In, please open the application in a new browser tab. Popups are restricted within this preview iframe.
-            </AlertDescription>
-          </Alert>
-          <Button onClick={() => window.open(window.location.href, '_blank')} className="w-full mt-4">
-            Open in New Tab
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className="w-full max-w-sm">
