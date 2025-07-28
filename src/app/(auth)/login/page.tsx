@@ -78,6 +78,7 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     try {
       const provider = new GoogleAuthProvider();
+      // Use signInWithPopup for a more direct login flow that avoids redirect issues.
       const result = await signInWithPopup(auth, provider);
       
       toast({
@@ -87,6 +88,7 @@ export default function LoginPage() {
       router.push('/dashboard');
     } catch (error: any) {
       let description = "An unknown error occurred.";
+      // Provide clearer error messages for common popup-related issues.
       if (error.code === 'auth/popup-closed-by-user') {
         description = "The sign-in popup was closed before completing the process. Please try again.";
       } else if (error.code === 'auth/cancelled-popup-request') {

@@ -2,11 +2,10 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User, getRedirectResult, getAdditionalUserInfo } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { LeafLoader } from '@/components/ui/leaf-loader';
-import { useToast } from './use-toast';
 
 export interface UserData {
   totalPoints: number;
@@ -31,15 +30,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // onAuthStateChanged is the recommended way to get the current user.
+    // It automatically handles the result of signInWithPopup and persists session.
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
+        // If a user is logged in, listen for changes to their data in Firestore.
         const userDocRef = doc(db, 'users', currentUser.uid);
         const unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
           if (doc.exists()) {
             setUserData(doc.data() as UserData);
           } else {
-            // This might be a new user, but we'll let the signup logic handle doc creation.
+            // This can happen briefly for new users before their doc is created.
+            // Setting a default state prevents errors.
             setUserData({ totalPoints: 0, totalTrees: 0 });
           }
            setLoading(false);
@@ -50,11 +53,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         return () => unsubscribeFirestore();
       } else {
+        // If no user is logged in, clear user data and finish loading.
         setUserData(null);
         setLoading(false);
       }
     });
 
+    // Cleanup the subscription when the component unmounts.
     return () => unsubscribe();
   }, []);
 
