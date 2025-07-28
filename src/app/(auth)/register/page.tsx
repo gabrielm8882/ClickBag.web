@@ -40,10 +40,9 @@ const registerSchema = z.object({
 
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
-  const { user, signInWithGoogle } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (user) {
@@ -100,12 +99,6 @@ export default function RegisterPage() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setIsGoogleLoading(true);
-    await signInWithGoogle();
-    // The useAuth hook will handle showing the loader, so we don't set isGoogleLoading to false.
-  };
-
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
@@ -159,11 +152,8 @@ export default function RegisterPage() {
             />
           </CardContent>
           <CardFooter className="flex-col gap-4">
-            <Button type="submit" className="w-full shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow" disabled={isLoading || isGoogleLoading}>
+            <Button type="submit" className="w-full shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow" disabled={isLoading}>
               {isLoading ? <Loader2 className="animate-spin" /> : 'Create account'}
-            </Button>
-             <Button variant="outline" type="button" className="w-full" onClick={handleGoogleSignIn} disabled={isGoogleLoading}>
-              {isGoogleLoading ? <Loader2 className="animate-spin" /> : 'Sign up with Google'}
             </Button>
             <div className="mt-4 text-center text-sm w-full">
               Already have an account?{' '}
