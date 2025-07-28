@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Leaf, LogOut, User as UserIcon, Menu, Crown } from 'lucide-react';
+import { Leaf, LogOut, User as UserIcon, Menu, Crown, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import {
   DropdownMenu,
@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 
 
 export function Header() {
-  const { user, userData, signOut } = useAuth();
+  const { user, userData, signOut, isAdmin } = useAuth();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -85,6 +85,7 @@ export function Header() {
                                    <NavLink href="/upload">Upload</NavLink>
                                 </>
                             )}
+                             {isAdmin && <NavLink href="/admin">Admin</NavLink>}
                             <NavLink href="/sponsors">Sponsors</NavLink>
                         </div>
                     </div>
@@ -114,6 +115,11 @@ export function Header() {
                     </Link>
                   </>
                 )}
+                {isAdmin && (
+                  <Link href="/admin" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                      Admin
+                  </Link>
+                )}
                 <Link href="/sponsors" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
                       Sponsors
                 </Link>
@@ -126,7 +132,9 @@ export function Header() {
               <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <div className="flex items-center gap-2 cursor-pointer">
-                   {userData && userData.totalPoints > 0 && (
+                   {isAdmin ? (
+                       <Shield className="h-5 w-5 text-blue-500" />
+                   ) : userData && userData.totalPoints > 0 && (
                       <Crown className="h-5 w-5 text-accent" />
                    )}
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full ring-2 ring-offset-background ring-offset-2 ring-accent">
@@ -147,6 +155,14 @@ export function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {isAdmin && (
+                  <Link href="/admin" passHref>
+                    <DropdownMenuItem>
+                      <Shield className="mr-2 h-4 w-4" />
+                      <span>Admin Panel</span>
+                    </DropdownMenuItem>
+                  </Link>
+                )}
                 <Link href="/dashboard" passHref>
                   <DropdownMenuItem>
                     <UserIcon className="mr-2 h-4 w-4" />

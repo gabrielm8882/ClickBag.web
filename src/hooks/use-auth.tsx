@@ -13,13 +13,13 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   getAdditionalUserInfo,
-  setPersistence,
-  browserLocalPersistence
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
 import { LeafLoader } from '@/components/ui/leaf-loader';
 import { useRouter } from 'next/navigation';
+
+const ADMIN_EMAIL = "click.bag.sp@gmail.com";
 
 export interface UserData {
   totalPoints: number;
@@ -32,6 +32,7 @@ interface AuthContextType {
   user: User | null;
   userData: UserData | null;
   loading: boolean;
+  isAdmin: boolean;
   signOut: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<any>;
   registerWithEmail: (name: string, email: string, password: string) => Promise<void>;
@@ -44,6 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -57,15 +59,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (currentUser) {
         setUser(currentUser);
+        setIsAdmin(currentUser.email === ADMIN_EMAIL);
         const userDocRef = doc(db, 'users', currentUser.uid);
         
         unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
           if (docSnap.exists()) {
             setUserData(docSnap.data() as UserData);
           } else {
-            // This case can happen if a user was deleted from Firestore but not Auth.
-            // We can re-create their doc here if needed.
-             setDoc(userDocRef, {
+            setDoc(userDocRef, {
                 displayName: currentUser.displayName,
                 email: currentUser.email,
                 totalPoints: 0,
@@ -76,6 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setUser(null);
         setUserData(null);
+        setIsAdmin(false);
       }
       setLoading(false);
     });
@@ -127,19 +129,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (isNew) {
             console.log("New user detected via popup, creating Firestore document.");
             const userDocRef = doc(db, 'users', currentUser.uid);
-            await setDoc(userDocRef, {
-              displayName: currentUser.displayName,
-              email: currentUser.email,
-              totalPoints: 0,
-              totalTrees: 0,
-            }, { merge: true });
+            const userDoc = await getDoc(userDocRef);
+
+            if (!userDoc.exists()) {
+              await setDoc(userDocRef, {
+                displayName: currentUser.displayName,
+                email: currentUser.email,
+                totalPoints: 0,
+                totalTrees: 0,
+              }, { merge: true });
+            }
             sessionStorage.setItem('isNewUser', 'true');
         }
-        // For existing users, onAuthStateChanged will handle the data loading.
-        // The router.push in the login/register page useEffect will handle navigation.
     } catch (error) {
         console.error("Google Sign-In with popup failed:", error);
-        // Let the calling component handle UI feedback (e.g., a toast).
         throw error;
     }
   };
@@ -154,7 +157,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading, signOut, signInWithEmail, registerWithEmail, signInWithGoogle }}>
+    <AuthContext.Provider value={{ user, userData, loading, isAdmin, signOut, signInWithEmail, registerWithEmail, signInWithGoogle }}>
       {children}
     </AuthContext.Provider>
   );
