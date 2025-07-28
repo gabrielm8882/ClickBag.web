@@ -18,6 +18,7 @@ import sharp from 'sharp';
 
 const POINTS_PER_TREE = 10;
 const TREES_PER_VALIDATION = 1;
+const USER_MAX_TREES = 20;
 
 
 const ValidateReceiptImageInputSchema = z.object({
@@ -98,22 +99,35 @@ const validateReceiptImageFlow = ai.defineFlow(
     outputSchema: ValidateReceiptImageOutputSchema,
   },
   async (input, context) => {
-    // This flow no longer has auth context from the plugin.
-    // For now, we cannot verify the user ID. This is a temporary state
-    // to get the app building and can be addressed later.
-    const uid = 'temp-unauthenticated-user'; // Placeholder
+    if (!context.auth) {
+      throw new Error('User must be authenticated.');
+    }
+    const uid = context.auth.uid;
+    
+    // 1. Check if user has reached the tree limit
+    const userDocRef = doc(db, 'users', uid);
+    const userDoc = await getDoc(userDocRef);
+    const currentUserTrees = userDoc.data()?.totalTrees || 0;
 
-    // 1. Image Compression & Hashing
+    if (currentUserTrees >= USER_MAX_TREES) {
+        return {
+            isValid: false,
+            clickPoints: 0,
+            validationDetails: `You have reached your contribution limit of ${USER_MAX_TREES} trees. Thank you for your amazing impact! Please contact us to extend your limit.`
+        };
+    }
+
+    // 2. Image Compression & Hashing
     const imageBuffer = Buffer.from(input.photoDataUri.split(',')[1], 'base64');
     
     const compressedImageBuffer = await sharp(imageBuffer)
-        .resize(600, 600, { fit: 'inside', withoutEnlargement: true })
-        .jpeg({ quality: 70 })
+        .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 80 })
         .toBuffer();
 
     const imageHash = crypto.createHash('sha256').update(compressedImageBuffer).digest('hex');
 
-    // 2. Duplicate Check in Firestore
+    // 3. Duplicate Check in Firestore
     const submissionsRef = collection(db, 'submissions');
     const q = query(submissionsRef, where('imageHash', '==', imageHash));
     const querySnapshot = await getDocs(q);
@@ -126,7 +140,7 @@ const validateReceiptImageFlow = ai.defineFlow(
         };
     }
 
-    // 3. AI Validation with compressed image
+    // 4. AI Validation with compressed image
     const compressedDataUri = `data:image/jpeg;base64,${compressedImageBuffer.toString('base64')}`;
     const currentDateTime = new Date().toISOString();
 
@@ -141,7 +155,7 @@ const validateReceiptImageFlow = ai.defineFlow(
       throw new Error('AI validation failed to produce an output.');
     }
 
-    // 4. Firestore Batch Write
+    // 5. Firestore Batch Write
     const batch = writeBatch(db);
 
     // Add to submissions history
@@ -158,10 +172,7 @@ const validateReceiptImageFlow = ai.defineFlow(
 
     if (output.isValid) {
         try {
-            const userDocRef = doc(db, 'users', uid);
             const communityStatsRef = doc(db, 'community-stats', 'global');
-            
-            const userDoc = await getDoc(userDocRef);
             const communityStatsDoc = await getDoc(communityStatsRef);
 
             // Update user stats

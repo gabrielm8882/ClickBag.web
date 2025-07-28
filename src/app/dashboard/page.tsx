@@ -23,7 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Coins, Leaf, Target, ShieldCheck, Crown } from 'lucide-react';
+import { Coins, Leaf, Target, ShieldCheck, Crown, PartyPopper } from 'lucide-react';
 import { format, startOfDay, endOfDay } from 'date-fns';
 import {
   AlertDialog,
@@ -37,6 +37,7 @@ import {
 import { LeafLoader } from '@/components/ui/leaf-loader';
 import type { UserData } from '@/hooks/use-auth';
 import { motion } from 'framer-motion';
+import Confetti from 'react-confetti';
 
 interface Submission {
   id: string;
@@ -46,7 +47,8 @@ interface Submission {
   status: 'Approved' | 'Rejected';
 }
 
-const DAILY_GOAL = 3; // 3 trees per day
+const DAILY_GOAL = 2; // 2 trees per day
+const USER_MAX_TREES = 20;
 
 function AnimatedCounter({ endValue }: { endValue: number }) {
   const [count, setCount] = useState(0);
@@ -88,6 +90,7 @@ export default function DashboardPage() {
   const [pageLoading, setPageLoading] = useState(true);
   const [progressValue, setProgressValue] = useState(0);
   const [showPrivacyNotice, setShowPrivacyNotice] = useState(false);
+  const [showLimitReached, setShowLimitReached] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -104,7 +107,13 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (user) {
+    if (user && userData) {
+      // Check if the user has reached the limit and hasn't seen the notification yet.
+      if (userData.totalTrees >= USER_MAX_TREES && !sessionStorage.getItem('limitNotified')) {
+        setShowLimitReached(true);
+        sessionStorage.setItem('limitNotified', 'true');
+      }
+
       setPageLoading(true);
 
       const today = new Date();
@@ -128,6 +137,7 @@ export default function DashboardPage() {
 
             const submissionDate = submission.date.toDate();
             if (submissionDate >= startOfToday && submissionDate <= endOfToday && submission.status === 'Approved') {
+                // Each approved submission is 1 tree
                 todayTreeCount += 1;
             }
         });
@@ -140,7 +150,7 @@ export default function DashboardPage() {
         unsubscribeSubmissions();
       };
     }
-  }, [user]);
+  }, [user, userData]);
 
   useEffect(() => {
     // Reset progress to 0 before animating to ensure it runs every time
@@ -154,7 +164,7 @@ export default function DashboardPage() {
   const handleClosePrivacyNotice = () => {
     setShowPrivacyNotice(false);
   };
-
+  
   if (loading || pageLoading || !user || !userData) {
     return (
       <div className="flex flex-col justify-center items-center h-screen">
@@ -166,6 +176,34 @@ export default function DashboardPage() {
 
   return (
     <>
+       {showLimitReached && <Confetti width={window.innerWidth} height={window.innerHeight} />}
+       <AlertDialog open={showLimitReached} onOpenChange={() => setShowLimitReached(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex justify-center mb-4">
+              <PartyPopper className="h-16 w-16 text-accent"/>
+            </div>
+            <AlertDialogTitle className="text-center font-headline text-2xl">
+              You're a Tree-Planting Champion!
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center pt-2">
+              Wow! You've reached the limit of {USER_MAX_TREES} planted trees. Your impact is incredible, and we're so grateful.
+              <br/><br/>
+              To continue planting more trees with your ClickBag, please contact us for a free account upgrade.
+              <br/><br/>
+              DM us on Instagram: <a href="https://www.instagram.com/click_bag_" target="_blank" rel="noopener noreferrer" className="font-semibold text-accent hover:underline">@click_bag_</a>
+              <br/>
+              Or email: <a href="mailto:click.bag.sp@gmail.com" className="font-semibold text-accent hover:underline">click.bag.sp@gmail.com</a>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowLimitReached(false)} className="w-full">
+              Got it!
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={showPrivacyNotice} onOpenChange={handleClosePrivacyNotice}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -176,7 +214,7 @@ export default function DashboardPage() {
               Privacy and data information
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center pt-2">
-              Welcome to ClickBag! Please note that photos you upload are temporarily stored for validation and project-related purposes. Your submission history is stored indefinitely to track your contributions. We are committed to your privacy and only gather data you explicitly provide and agree to.
+              Welcome to ClickBag! Please note that photos you upload are temporarily stored for validation and project-related purposes. Your submission history is stored indefinitely to track your contributions and prevent fraud. We are committed to your privacy and only gather data you explicitly provide and agree to.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -234,7 +272,7 @@ export default function DashboardPage() {
                 <AnimatedCounter endValue={userData?.totalTrees || 0} />
               </div>
               <p className="text-xs text-muted-foreground">
-                Thanks to your points!
+                Thanks to your points! ({USER_MAX_TREES} max)
               </p>
             </CardContent>
           </Card>
