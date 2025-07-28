@@ -232,8 +232,8 @@ export default function AdminPage() {
     const adminUser = users.find(u => u.id === user?.uid);
     if (!adminUser) return { totalPoints: 0, totalTrees: 0 };
     return {
-        totalPoints: testPoints !== null ? testPoints : adminUser.totalPoints,
-        totalTrees: testTrees !== null ? testTrees : adminUser.totalTrees,
+        totalPoints: testPoints !== null ? testPoints : (adminUser.totalPoints || 0),
+        totalTrees: testTrees !== null ? testTrees : (adminUser.totalTrees || 0),
     };
   };
 
@@ -343,8 +343,8 @@ export default function AdminPage() {
                                 <div className="font-medium">{u.displayName} {u.id === user?.uid && "(Admin)"}</div>
                                 <div className="text-xs text-muted-foreground">{u.email}</div>
                             </TableCell>
-                            <TableCell className="text-right font-mono">{u.id === user?.uid ? adminDisplayData.totalPoints : u.totalPoints}</TableCell>
-                            <TableCell className="text-right font-mono">{u.id === user?.uid ? adminDisplayData.totalTrees : u.totalTrees}</TableCell>
+                            <TableCell className="text-right font-mono">{u.id === user?.uid ? adminDisplayData.totalPoints.toLocaleString() : (u.totalPoints || 0).toLocaleString()}</TableCell>
+                            <TableCell className="text-right font-mono">{u.id === user?.uid ? adminDisplayData.totalTrees.toLocaleString() : (u.totalTrees || 0).toLocaleString()}</TableCell>
                             <TableCell className="text-center">
                                 <Button variant="ghost" size="icon" onClick={() => handleManageUser(u)}>
                                     <Edit className="h-4 w-4" />
@@ -378,11 +378,19 @@ export default function AdminPage() {
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="test-points">Test Points</Label>
-                            <Input id="test-points" type="number" placeholder="Enter points..." value={testPoints ?? ''} onChange={(e) => setTestPoints(e.target.value === '' ? null : Number(e.target.value))} />
+                            <div className="flex items-center gap-2">
+                                <Button variant="outline" size="icon" onClick={() => setTestPoints(p => Math.max(0, (p || 0) - 10))}><Minus className="h-4 w-4" /></Button>
+                                <Input id="test-points" type="number" placeholder="Enter points..." value={testPoints ?? ''} onChange={(e) => setTestPoints(e.target.value === '' ? null : Number(e.target.value))} />
+                                <Button variant="outline" size="icon" onClick={() => setTestPoints(p => (p || 0) + 10)}><Plus className="h-4 w-4" /></Button>
+                            </div>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="test-trees">Test Trees</Label>
-                            <Input id="test-trees" type="number" placeholder="Enter trees..." value={testTrees ?? ''} onChange={(e) => setTestTrees(e.target.value === '' ? null : Number(e.target.value))} />
+                            <div className="flex items-center gap-2">
+                                <Button variant="outline" size="icon" onClick={() => setTestTrees(p => Math.max(0, (p || 0) - 1))}><Minus className="h-4 w-4" /></Button>
+                                <Input id="test-trees" type="number" placeholder="Enter trees..." value={testTrees ?? ''} onChange={(e) => setTestTrees(e.target.value === '' ? null : Number(e.target.value))} />
+                                <Button variant="outline" size="icon" onClick={() => setTestTrees(p => (p || 0) + 1)}><Plus className="h-4 w-4" /></Button>
+                            </div>
                         </div>
                     </CardContent>
                     <CardFooter>
@@ -423,7 +431,11 @@ export default function AdminPage() {
                                 <TableCell>
                                     <Badge
                                         variant={submission.status === 'Approved' ? 'default' : 'destructive'}
-                                        className={submission.status === 'Approved' ? 'bg-green-500/20 text-green-700 border-green-500/20' : ''}
+                                        className={cn(
+                                            submission.status === 'Approved' 
+                                            ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200' 
+                                            : 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200'
+                                        )}
                                     >
                                         {submission.status === 'Approved' ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
                                         {submission.status}
@@ -512,3 +524,4 @@ export default function AdminPage() {
   );
 }
 
+    

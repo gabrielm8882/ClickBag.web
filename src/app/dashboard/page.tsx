@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, doc, Timestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, Timestamp, orderBy } from 'firebase/firestore';
 import {
   Card,
   CardContent,
@@ -23,7 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Coins, Leaf, Target, ShieldCheck, Crown, PartyPopper } from 'lucide-react';
+import { Coins, Leaf, Target, ShieldCheck, Crown, PartyPopper, CheckCircle, XCircle } from 'lucide-react';
 import { format, startOfDay, endOfDay } from 'date-fns';
 import {
   AlertDialog,
@@ -38,6 +38,16 @@ import { LeafLoader } from '@/components/ui/leaf-loader';
 import type { UserData } from '@/hooks/use-auth';
 import { motion } from 'framer-motion';
 import Confetti from 'react-confetti';
+import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+
 
 interface Submission {
   id: string;
@@ -45,6 +55,7 @@ interface Submission {
   geolocation: string;
   points: number;
   status: 'Approved' | 'Rejected';
+  validationDetails: string;
 }
 
 const DAILY_GOAL = 2; // 2 trees per day
@@ -70,7 +81,6 @@ function AnimatedCounter({ endValue }: { endValue: number }) {
       }
     };
     
-    // Always start the animation when the component mounts or endValue changes.
     const animationFrame = requestAnimationFrame(step);
 
     return () => {
@@ -118,9 +128,13 @@ export default function DashboardPage() {
 
       const today = new Date();
       const startOfToday = startOfDay(today);
-      const endOfToday = endOfDay(today);
 
-      const q = query(collection(db, 'submissions'), where('userId', '==', user.uid));
+      const q = query(
+        collection(db, 'submissions'), 
+        where('userId', '==', user.uid),
+        orderBy('date', 'desc')
+      );
+      
       const unsubscribeSubmissions = onSnapshot(q, (querySnapshot) => {
         const userSubmissions: Submission[] = [];
         let todayTreeCount = 0;
@@ -128,20 +142,16 @@ export default function DashboardPage() {
             const data = doc.data();
             const submission = {
                 id: doc.id,
-                date: data.date,
-                geolocation: data.geolocation || 'N/A',
-                points: data.points,
-                status: data.status,
+                ...data,
             } as Submission;
             userSubmissions.push(submission);
 
             const submissionDate = submission.date.toDate();
-            if (submissionDate >= startOfToday && submissionDate <= endOfToday && submission.status === 'Approved') {
-                // Each approved submission is 1 tree
+            if (submissionDate >= startOfToday && submission.status === 'Approved') {
                 todayTreeCount += 1;
             }
         });
-        setSubmissions(userSubmissions.sort((a, b) => b.date.toMillis() - a.date.toMillis()));
+        setSubmissions(userSubmissions);
         setDailyTrees(todayTreeCount);
         setPageLoading(false);
       });
@@ -153,10 +163,8 @@ export default function DashboardPage() {
   }, [user, userData]);
 
   useEffect(() => {
-    // Reset progress to 0 before animating to ensure it runs every time
     setProgressValue(0);
     const newProgress = Math.min((dailyTrees / DAILY_GOAL) * 100, 100);
-    // Use a short timeout to allow the reset to 0 to be painted first
     const animationTimeout = setTimeout(() => setProgressValue(newProgress), 100);
     return () => clearTimeout(animationTimeout);
   }, [dailyTrees]);
@@ -292,44 +300,65 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Submission history</CardTitle>
             <CardDescription>
-              A log of your recent purchase and receipt uploads.
+              A log of your recent purchase and receipt uploads. Click a row to see details.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead className="text-right">Points</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {submissions.map((submission) => (
-                  <TableRow key={submission.id}>
-                    <TableCell className="font-medium">{format(submission.date.toDate(), 'PPP')}</TableCell>
-                    <TableCell>{submission.geolocation}</TableCell>
-                    <TableCell className="text-right">{submission.points}</TableCell>
-                    <TableCell className="text-center">
-                      <Badge
-                        variant={
-                          submission.status === 'Approved'
-                            ? 'default'
-                            : 'destructive'
-                        }
-                        className={submission.status === 'Approved' ? 'bg-green-500/20 text-green-700 border-green-500/20' : ''}
-                      >
-                        {submission.status}
-                      </Badge>
-                    </TableCell>
+            <div className="overflow-auto max-h-[400px]">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead className="text-right">Points</TableHead>
+                    <TableHead className="text-center">Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {submissions.map((submission) => (
+                    <Dialog key={submission.id}>
+                      <DialogTrigger asChild>
+                         <TableRow className="cursor-pointer">
+                          <TableCell className="font-medium">{format(submission.date.toDate(), 'PPP')}</TableCell>
+                          <TableCell>{submission.geolocation}</TableCell>
+                          <TableCell className="text-right">{submission.points}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge
+                              variant={submission.status === 'Approved' ? 'default' : 'destructive'}
+                              className={cn(
+                                submission.status === 'Approved' 
+                                  ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200' 
+                                  : 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200'
+                              )}
+                            >
+                               {submission.status === 'Approved' ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
+                               {submission.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Submission Details</DialogTitle>
+                          <DialogDescription>
+                            {format(submission.date.toDate(), 'PPP, p')}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-2 py-4">
+                           <p className="text-sm text-muted-foreground"><span className="font-semibold text-foreground">AI Validation:</span> {submission.validationDetails}</p>
+                           <p className="text-sm text-muted-foreground"><span className="font-semibold text-foreground">Location:</span> {submission.geolocation}</p>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </div>
     </>
   );
 }
+
+    
