@@ -68,8 +68,6 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
-    // Use signInWithRedirect as the most reliable method.
-    // The useAuth hook will handle the redirect result.
     await signInWithRedirect(auth, provider);
   };
 

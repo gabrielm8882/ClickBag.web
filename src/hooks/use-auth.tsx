@@ -32,73 +32,63 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // This is the definitive, robust way to handle auth state.
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      // First, see if a user is returned by the observer.
       if (user) {
+        // User is signed in.
         setUser(user);
-        // If there's a user, set up a listener for their data.
         const userDocRef = doc(db, 'users', user.uid);
         const unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
           if (doc.exists()) {
             setUserData(doc.data() as UserData);
           }
-          // The main loading state is finished once we have a user and their data.
           setLoading(false);
         });
-        // We'll return this to clean it up.
         return unsubscribeFirestore;
-      }
-
-      // If onAuthStateChanged returns no user, we're not done yet.
-      // We need to check if we're in the middle of a redirect flow.
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          // If we get a result here, it means the user just signed in.
-          // onAuthStateChanged will fire again with the new user, so we don't need to setUser here.
-          const additionalInfo = getAdditionalUserInfo(result);
-
-          // Check if it's a new user. If so, create their document.
-          if (additionalInfo?.isNewUser) {
-            const userDocRef = doc(db, 'users', result.user.uid);
-            // Check if doc exists to be safe, though it shouldn't for a new user.
-            const docSnap = await getDoc(userDocRef);
-            if (!docSnap.exists()) {
-                await setDoc(userDocRef, { totalPoints: 0, totalTrees: 0 });
-            }
+      } else {
+        // User is signed out. Check for redirect result.
+        try {
+          const result = await getRedirectResult(auth);
+          if (result) {
+            // This is the signed-in user from the redirect.
+            const user = result.user;
+            const additionalInfo = getAdditionalUserInfo(result);
+            
             toast({
-              title: "✅ Registration Complete",
-              description: `Welcome to ClickBag, ${result.user.displayName}!`,
-            });
-            sessionStorage.setItem('isNewUser', 'true');
-          } else {
-             toast({
                 title: "✅ Login Successful",
-                description: `Welcome back, ${result.user.displayName}!`,
+                description: `Welcome to ClickBag, ${user.displayName}!`,
             });
+            
+            if (additionalInfo?.isNewUser) {
+              // Create a new user document in Firestore.
+              const userDocRef = doc(db, 'users', user.uid);
+              const docSnap = await getDoc(userDocRef);
+              if (!docSnap.exists()) {
+                await setDoc(userDocRef, { totalPoints: 0, totalTrees: 0 });
+              }
+              sessionStorage.setItem('isNewUser', 'true');
+            }
+            // The onAuthStateChanged observer will fire again with the user object,
+            // so we don't need to call setUser or setLoading here.
+          } else {
+            // No user and no redirect result, so they are truly logged out.
+            setUser(null);
+            setUserData(null);
+            setLoading(false);
           }
-        } else {
-          // If there's no user and no redirect result, they are truly logged out.
+        } catch (error: any) {
+          console.error("Auth Error:", error);
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "Could not complete the sign-in process. Please try again.",
+          });
           setUser(null);
           setUserData(null);
           setLoading(false);
         }
-      } catch (error: any) {
-        // Handle errors from getRedirectResult (e.g., network issues)
-        console.error("Error during getRedirectResult:", error);
-        toast({
-            variant: "destructive",
-            title: "Authentication Error",
-            description: "Could not complete the sign-in process. Please try again.",
-        });
-        setUser(null);
-        setUserData(null);
-        setLoading(false);
       }
     });
 
-    // Cleanup the subscription when the component unmounts.
     return () => unsubscribe();
   }, [toast]);
 
@@ -112,7 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading }}>
+    <AuthContext.Provider value={{ user, userData, loading: false }}>
       {children}
     </AuthContext.Provider>
   );
