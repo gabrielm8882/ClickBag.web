@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Leaf, LogOut, User as UserIcon, Menu, Crown, Shield } from 'lucide-react';
+import { Leaf, LogOut, User as UserIcon, Menu, Crown, Shield, PartyPopper } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import {
   DropdownMenu,
@@ -15,15 +15,26 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle, SheetDescription } from '../ui/sheet';
 import { cn } from '@/lib/utils';
 
+const USER_MAX_TREES = 20;
 
 export function Header() {
   const { user, userData, signOut, isAdmin } = useAuth();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showLimitDialog, setShowLimitDialog] = useState(false);
 
   const handleSignOut = async () => {
     try {
@@ -40,17 +51,32 @@ export function Header() {
     return names.map((n) => n[0]).join('');
   };
 
-  const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
-    <Link href={href} passHref>
-        <SheetClose asChild>
-            <Button variant="ghost" className="justify-start w-full text-left md:w-auto md:justify-center md:text-sm md:font-medium md:text-muted-foreground md:transition-colors md:hover:text-primary md:hover:bg-transparent md:px-0">
+  const handleUploadClick = () => {
+    if (userData && userData.totalTrees >= USER_MAX_TREES) {
+      setShowLimitDialog(true);
+    } else {
+      router.push('/upload');
+    }
+  };
+
+  const NavLink = ({ href, children, onClick }: { href?: string; children: React.ReactNode; onClick?: () => void }) => (
+     <SheetClose asChild>
+        {href ? (
+             <Link href={href} passHref>
+                <Button variant="ghost" className="justify-start w-full text-left md:w-auto md:justify-center md:text-sm md:font-medium md:text-muted-foreground md:transition-colors md:hover:text-primary md:hover:bg-transparent md:px-0">
+                    {children}
+                </Button>
+            </Link>
+        ) : (
+            <Button onClick={onClick} variant="ghost" className="justify-start w-full text-left md:w-auto md:justify-center md:text-sm md:font-medium md:text-muted-foreground md:transition-colors md:hover:text-primary md:hover:bg-transparent md:px-0">
                 {children}
             </Button>
-        </SheetClose>
-    </Link>
+        )}
+    </SheetClose>
   );
 
   return (
+    <>
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center justify-between px-4">
         
@@ -82,7 +108,7 @@ export function Header() {
                             {user && (
                                 <>
                                    <NavLink href="/dashboard">Dashboard</NavLink>
-                                   <NavLink href="/upload">Upload</NavLink>
+                                   <NavLink onClick={() => { setIsMobileMenuOpen(false); handleUploadClick(); }}>Upload</NavLink>
                                 </>
                             )}
                              {isAdmin && <NavLink href="/admin">Admin</NavLink>}
@@ -110,9 +136,9 @@ export function Header() {
                     <Link href="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
                       Dashboard
                     </Link>
-                    <Link href="/upload" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                     <button onClick={handleUploadClick} className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
                       Upload
-                    </Link>
+                    </button>
                   </>
                 )}
                 {isAdmin && (
@@ -186,8 +212,29 @@ export function Header() {
             </div>
           )}
         </div>
-
       </div>
     </header>
+
+    <AlertDialog open={showLimitDialog} onOpenChange={setShowLimitDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex justify-center mb-4">
+              <PartyPopper className="h-16 w-16 text-accent"/>
+            </div>
+            <AlertDialogTitle className="text-center font-headline text-2xl">
+              You've Reached the Summit!
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center pt-2">
+              Congratulations! You have reached the maximum contribution limit of {USER_MAX_TREES} trees for now. Your impact is amazing, and we're thrilled to have you in our community. Stay tuned for future updates on how you can contribute even more!
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowLimitDialog(false)} className="w-full">
+              I'm a Champion!
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
