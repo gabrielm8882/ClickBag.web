@@ -89,77 +89,53 @@ export default function AdminPage() {
       if (!user || !isAdmin) {
         router.push('/login');
       } else {
-        // If the user is an admin, start loading data.
-        // We will set pageLoading to false after both snapshots are established.
+        setPageLoading(false); 
       }
     }
   }, [user, loading, isAdmin, router]);
 
   useEffect(() => {
     if (isAdmin) {
-      let userUnsubscribe: Function;
-      let submissionUnsubscribe: Function;
-      let usersLoaded = false;
-      let submissionsLoaded = false;
-
-      const checkAllDataLoaded = () => {
-        if (usersLoaded && submissionsLoaded) {
-          setPageLoading(false);
-        }
-      };
-      
       const usersQuery = query(collection(db, 'users'), orderBy('totalPoints', 'desc'));
-      userUnsubscribe = onSnapshot(usersQuery, (querySnapshot) => {
+      const usersUnsubscribe = onSnapshot(usersQuery, (usersSnapshot) => {
         const usersData: FullUserData[] = [];
         const userMap = new Map<string, string>();
         let points = 0;
         let trees = 0;
-        querySnapshot.forEach((doc) => {
+
+        usersSnapshot.forEach((doc) => {
           const data = doc.data() as UserData;
-          const fullUserData = { id: doc.id, ...data };
-          usersData.push(fullUserData);
+          usersData.push({ id: doc.id, ...data });
           userMap.set(doc.id, data.displayName || 'Unknown User');
           points += data.totalPoints || 0;
           trees += data.totalTrees || 0;
         });
+
         setUsers(usersData);
         setTotalPoints(points);
         setTotalTrees(trees);
-        
-        // This part is important for the submissions to have user names
-        setSubmissions(prevSubmissions => 
-          prevSubmissions.map(sub => ({...sub, userName: userMap.get(sub.userId)}))
-        );
 
-        usersLoaded = true;
-        checkAllDataLoaded();
+        // Now that we have the latest user map, let's fetch submissions.
+        const submissionsQuery = query(collection(db, 'submissions'), orderBy('date', 'desc'));
+        const submissionsUnsubscribe = onSnapshot(submissionsQuery, (submissionsSnapshot) => {
+          const submissionsData: Submission[] = submissionsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            const userName = userMap.get(data.userId) || 'DelAco'; // Default to 'DelAco' if user not found
+            return {
+              id: doc.id,
+              userName,
+              ...data,
+            } as Submission;
+          });
+          setSubmissions(submissionsData);
+        });
+
+        return () => submissionsUnsubscribe();
       }, (error) => {
         console.error("Error fetching users:", error);
-        usersLoaded = true;
-        checkAllDataLoaded();
       });
 
-      const submissionsQuery = query(collection(db, 'submissions'), orderBy('date', 'desc'));
-      submissionUnsubscribe = onSnapshot(submissionsQuery, (querySnapshot) => {
-        const submissionsData: Submission[] = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-        } as Submission));
-        
-        // At this point, we might not have the users yet, so we'll map names later or rely on the user snapshot to fill them in.
-        setSubmissions(submissionsData);
-        submissionsLoaded = true;
-        checkAllDataLoaded();
-      }, (error) => {
-        console.error("Error fetching submissions:", error);
-        submissionsLoaded = true;
-        checkAllDataLoaded();
-      });
-
-      return () => {
-        if (userUnsubscribe) userUnsubscribe();
-        if (submissionUnsubscribe) submissionUnsubscribe();
-      };
+      return () => usersUnsubscribe();
     }
   }, [isAdmin]);
 
@@ -296,7 +272,7 @@ export default function AdminPage() {
                 <TableBody>
                     {submissions.length > 0 ? submissions.map((submission) => (
                     <TableRow key={submission.id}>
-                        <TableCell className="font-medium">{submission.userName || 'Loading...'}</TableCell>
+                        <TableCell className="font-medium">{submission.userName}</TableCell>
                         <TableCell>{submission.date ? format(submission.date.toDate(), 'PPp') : 'N/A'}</TableCell>
                         <TableCell>
                             <Badge
@@ -322,3 +298,4 @@ export default function AdminPage() {
     </div>
   );
 }
+
