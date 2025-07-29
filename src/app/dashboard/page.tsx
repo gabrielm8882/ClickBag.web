@@ -48,7 +48,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Button } from '@/components/ui/button';
-import { addPointsToAdmin } from '@/ai/flows/admin-actions';
+import { addPointsToAdmin as addPointsToAdminFlow } from '@/ai/flows/admin-actions';
+import { getFlow } from '@genkit-ai/next/client';
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -194,6 +195,7 @@ export default function DashboardPage() {
 
   const handleAdminPointsAdjustment = async (points: number) => {
     try {
+      const addPointsToAdmin = await getFlow('addPointsToAdmin', addPointsToAdminFlow);
       await addPointsToAdmin({ points });
       toast({
         title: 'Test Points Updated',
@@ -422,4 +424,5 @@ export default function DashboardPage() {
   );
 }
 
+    
     

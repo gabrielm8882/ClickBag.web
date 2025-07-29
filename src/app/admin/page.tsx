@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth, type UserData } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, orderBy, doc, Timestamp } from 'firebase/firestore';
-import { deleteSubmission, updateUserPoints, extendUserTreeLimit, addPointsToAdmin } from '@/ai/flows/admin-actions';
+import { deleteSubmission, updateUserPoints, extendUserTreeLimit, addPointsToAdmin as addPointsToAdminFlow } from '@/ai/flows/admin-actions';
+import { getFlow } from '@genkit-ai/next/client';
 import { LeafLoader } from '@/components/ui/leaf-loader';
 import {
   Card,
@@ -219,6 +220,7 @@ export default function AdminPage() {
       if (pointsAdjustment !== 0) {
         if (isEditingSelf) {
           // Use the test-only flow for the admin editing themselves
+          const addPointsToAdmin = await getFlow('addPointsToAdmin', addPointsToAdminFlow);
           await addPointsToAdmin({ points: pointsAdjustment });
           toast({
             title: 'Test Points Updated',
@@ -577,4 +579,5 @@ export default function AdminPage() {
   );
 }
 
+    
     
