@@ -45,6 +45,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { useDashboard } from '@/hooks/use-dashboard-store';
 
 
 interface FullUserData extends UserData {
@@ -114,8 +115,9 @@ export default function AdminPage() {
   const [newPoints, setNewPoints] = useState(0);
 
   // Admin testing states
-  const [testPoints, setTestPoints] = useState<number | null>(null);
-  const [testTrees, setTestTrees] = useState<number | null>(null);
+  const { testPoints, setTestPoints, setTestDailyTrees } = useDashboard();
+  const prevTestTreesRef = useRef<number | null>(null);
+
 
   const { toast } = useToast();
 
@@ -148,8 +150,7 @@ export default function AdminPage() {
       });
 
       // Fetch Users and create a map for submissions
-      const usersQuery = query(collection(db, 'users'), orderBy('totalPoints', 'desc'));
-      const usersUnsubscribe = onSnapshot(usersQuery, (usersSnapshot) => {
+      const usersUnsubscribe = onSnapshot(query(collection(db, 'users'), orderBy('totalPoints', 'desc')), (usersSnapshot) => {
         const usersData: FullUserData[] = [];
         const userMap = new Map<string, string>();
         
@@ -161,8 +162,7 @@ export default function AdminPage() {
         setUsers(usersData);
 
         // Fetch Submissions and map user names
-        const submissionsQuery = query(collection(db, 'submissions'), orderBy('date', 'desc'));
-        const submissionsUnsubscribe = onSnapshot(submissionsQuery, (submissionsSnapshot) => {
+        const submissionsUnsubscribe = onSnapshot(query(collection(db, 'submissions'), orderBy('date', 'desc')), (submissionsSnapshot) => {
           const submissionsData: Submission[] = submissionsSnapshot.docs.map(doc => {
             const data = doc.data();
             const userName = userMap.get(data.userId) || 'DelAco'; // Default to 'DelAco' if user not found
@@ -186,6 +186,35 @@ export default function AdminPage() {
       };
     }
   }, [isAdmin]);
+
+   // Effect for simulating daily goal based on test points
+  useEffect(() => {
+    const adminUser = users.find(u => u.id === user?.uid);
+    const realPoints = adminUser?.totalPoints ?? 0;
+    const currentPoints = testPoints ?? realPoints;
+    const currentTrees = Math.floor(currentPoints / 10);
+
+    const prevTrees = prevTestTreesRef.current;
+
+    if (prevTrees !== null && currentTrees > prevTrees) {
+      const treesEarned = currentTrees - prevTrees;
+      setTestDailyTrees(currentDaily => {
+        const newDailyTotal = currentDaily + treesEarned;
+        const DAILY_GOAL = 2; // Keep this consistent with the dashboard
+        if (newDailyTotal >= DAILY_GOAL) {
+          return 0;
+        }
+        return newDailyTotal;
+      });
+    }
+
+    if (currentTrees === 0) {
+        setTestDailyTrees(0);
+    }
+    
+    prevTestTreesRef.current = currentTrees;
+  }, [testPoints, users, user, setTestDailyTrees]);
+
 
   const handleDeleteSubmission = async (submissionId: string) => {
     try {
@@ -230,12 +259,17 @@ export default function AdminPage() {
 
   const getAdminDisplayData = () => {
     const adminUser = users.find(u => u.id === user?.uid);
-    if (!adminUser) return { totalPoints: 0, totalTrees: 0 };
+    const realPoints = adminUser?.totalPoints ?? 0;
+    
+    const simulatedPoints = testPoints !== null ? testPoints : realPoints;
+    const simulatedTrees = Math.floor(simulatedPoints / 10);
+    
     return {
-        totalPoints: testPoints !== null ? testPoints : (adminUser.totalPoints || 0),
-        totalTrees: testTrees !== null ? testTrees : (adminUser.totalTrees || 0),
+        totalPoints: simulatedPoints,
+        totalTrees: simulatedTrees,
     };
   };
+
 
   if (loading || pageLoading) {
     return (
@@ -365,37 +399,26 @@ export default function AdminPage() {
         
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <div className="space-y-8">
-                <Card>
+                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Edit className="h-5 w-5" />
                             Admin Controls
                         </CardTitle>
                         <CardDescription>
-                        Simulate stats for your admin account for testing. These changes are visual only and do not affect real data.
+                        Simulate your total points to test the leaderboard and daily goals. These changes are visual only.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="test-points">Test Points</Label>
+                            <Label htmlFor="test-points">Test Total Points</Label>
                             <div className="flex items-center gap-2">
                                 <Button variant="outline" size="icon" onClick={() => setTestPoints(p => Math.max(0, (p || 0) - 10))}><Minus className="h-4 w-4" /></Button>
                                 <Input id="test-points" type="number" placeholder="Enter points..." value={testPoints ?? ''} onChange={(e) => setTestPoints(e.target.value === '' ? null : Number(e.target.value))} />
                                 <Button variant="outline" size="icon" onClick={() => setTestPoints(p => (p || 0) + 10)}><Plus className="h-4 w-4" /></Button>
                             </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="test-trees">Test Trees</Label>
-                            <div className="flex items-center gap-2">
-                                <Button variant="outline" size="icon" onClick={() => setTestTrees(p => Math.max(0, (p || 0) - 1))}><Minus className="h-4 w-4" /></Button>
-                                <Input id="test-trees" type="number" placeholder="Enter trees..." value={testTrees ?? ''} onChange={(e) => setTestTrees(e.target.value === '' ? null : Number(e.target.value))} />
-                                <Button variant="outline" size="icon" onClick={() => setTestTrees(p => (p || 0) + 1)}><Plus className="h-4 w-4" /></Button>
-                            </div>
-                        </div>
                     </CardContent>
-                    <CardFooter>
-                         <Button variant="outline" onClick={() => { setTestPoints(null); setTestTrees(null); }}>Reset Simulation</Button>
-                    </CardFooter>
                 </Card>
 
                 <Card>
