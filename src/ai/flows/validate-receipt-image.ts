@@ -12,7 +12,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, Timestamp, collection, addDoc, getDocs, query, where, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, Timestamp, collection, addDoc, getDocs, query, where, runTransaction } from 'firebase/firestore';
 import * as crypto from 'crypto';
 import sharp from 'sharp';
 
@@ -54,7 +54,7 @@ const validateReceiptImagePrompt = ai.definePrompt({
   input: {schema: PromptInputSchema},
   output: {schema: ValidateReceiptImageOutputSchema},
   prompt: `You are an AI assistant that validates a user-submitted photo for a sustainability rewards program called ClickBag.
-The current server date and time is {{currentDateTime}} (in ISO 8601 format). You MUST use this as the absolute reference for "now".
+The current server time is {{currentDateTime}} (in ISO 8601 format). You MUST use this as the absolute reference for "now".
 The user's current location is Latitude: {{userLatitude}}, Longitude: {{userLongitude}}.
 
 The user has submitted a SINGLE photo that MUST contain two items:
@@ -103,7 +103,9 @@ const validateReceiptImageFlow = ai.defineFlow(
       throw new Error('User must be authenticated.');
     }
     const uid = context.auth.uid;
-    
+    const userDisplayName = context.auth.displayName;
+    const userEmail = context.auth.email;
+
     // 1. Check if user has reached the tree limit
     const userDocRef = doc(db, 'users', uid);
     const userDoc = await getDoc(userDocRef);
@@ -155,51 +157,73 @@ const validateReceiptImageFlow = ai.defineFlow(
       throw new Error('AI validation failed to produce an output.');
     }
 
-    // 5. Firestore Batch Write
-    const batch = writeBatch(db);
+    // 5. Firestore Updates
+    try {
+      await runTransaction(db, async (transaction) => {
+        // Add to submissions history
+        const submissionDocRef = doc(collection(db, 'submissions'));
+        transaction.set(submissionDocRef, {
+            userId: uid,
+            date: Timestamp.now(),
+            status: output.isValid ? 'Approved' : 'Rejected',
+            points: output.clickPoints,
+            geolocation: output.geolocation || 'N/A',
+            validationDetails: output.validationDetails,
+            imageHash: imageHash, 
+        });
 
-    // Add to submissions history
-    const submissionDocRef = doc(collection(db, 'submissions'));
-    batch.set(submissionDocRef, {
-        userId: uid,
-        date: Timestamp.now(),
-        status: output.isValid ? 'Approved' : 'Rejected',
-        points: output.clickPoints,
-        geolocation: output.geolocation || 'N/A',
-        validationDetails: output.validationDetails,
-        imageHash: imageHash, 
-    });
+        if (output.isValid) {
+            const communityStatsRef = doc(db, 'community-stats', 'global');
+            
+            // Get current docs within the transaction
+            const userDocTransaction = await transaction.get(userDocRef);
+            const communityStatsDocTransaction = await transaction.get(communityStatsRef);
 
-    if (output.isValid) {
-        // We use a transaction to safely update the user's and community's points.
-        const communityStatsRef = doc(db, 'community-stats', 'global');
-        
-        // We need the documents to exist for the transaction, so we get them first.
-        const userDoc = await getDoc(userDocRef);
-        const communityStatsDoc = await getDoc(communityStatsRef);
+            // Update User Stats
+            const currentPoints = userDocTransaction.data()?.totalPoints || 0;
+            const newTotalPoints = currentPoints + output.clickPoints;
+            const newTotalTrees = Math.floor(newTotalPoints / POINTS_PER_TREE);
+            
+            if (!userDocTransaction.exists()) {
+                 transaction.set(userDocRef, { 
+                    displayName: userDisplayName || 'Anonymous',
+                    email: userEmail || 'N/A',
+                    totalPoints: newTotalPoints, 
+                    totalTrees: newTotalTrees 
+                });
+            } else {
+                 transaction.update(userDocRef, { 
+                    totalPoints: newTotalPoints, 
+                    totalTrees: newTotalTrees 
+                });
+            }
+            
+            // Update Community Stats
+            const currentCommunityPoints = communityStatsDocTransaction.data()?.totalClickPoints || 0;
+            const currentCommunityTrees = communityStatsDocTransaction.data()?.totalTreesPlanted || 0;
+            const newCommunityPoints = currentCommunityPoints + output.clickPoints;
+            const newCommunityTrees = currentCommunityTrees + TREES_PER_VALIDATION;
 
-        const newTotalPoints = (userDoc.data()?.totalPoints || 0) + output.clickPoints;
-        const newTotalTrees = Math.floor(newTotalPoints / POINTS_PER_TREE);
-
-        if (!userDoc.exists()) {
-             batch.set(userDocRef, { totalPoints: newTotalPoints, totalTrees: newTotalTrees });
-        } else {
-             batch.update(userDocRef, { totalPoints: newTotalPoints, totalTrees: newTotalTrees });
+            if (!communityStatsDocTransaction.exists()) {
+                transaction.set(communityStatsRef, { 
+                    totalClickPoints: newCommunityPoints, 
+                    totalTreesPlanted: newCommunityTrees 
+                });
+            } else {
+                transaction.update(communityStatsRef, { 
+                    totalClickPoints: newCommunityPoints, 
+                    totalTreesPlanted: newCommunityTrees 
+                });
+            }
         }
-        
-        // Update community stats
-        const newCommunityPoints = (communityStatsDoc.data()?.totalClickPoints || 0) + output.clickPoints;
-        const newCommunityTrees = (communityStatsDoc.data()?.totalTreesPlanted || 0) + TREES_PER_VALIDATION;
-
-        if (!communityStatsDoc.exists()) {
-            batch.set(communityStatsRef, { totalClickPoints: newCommunityPoints, totalTreesPlanted: newCommunityTrees });
-        } else {
-            batch.update(communityStatsRef, { totalClickPoints: newCommunityPoints, totalTreesPlanted: newCommunityTrees });
-        }
+      });
+    } catch (e) {
+      console.error("Transaction failed: ", e);
+      throw new Error("Failed to save submission and update points. Please try again.");
     }
-
-    await batch.commit();
-
+    
     return output;
   }
 );
+
+    
