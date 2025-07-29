@@ -8,4 +8,4 @@ import * as adminActions from '@/ai/flows/admin-actions';
 import * as validation from '@/ai/flows/validate-receipt-image';
 
 
-export const POST = nextHandler();
+export const { POST, GET } = nextHandler();
