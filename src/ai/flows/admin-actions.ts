@@ -112,16 +112,50 @@ export const updateUserPoints = ai.defineFlow(
         }
     },
     async ({ userId, newTotalPoints }) => {
-        const userRef = doc(db, 'users', userId);
-        const newTotalTrees = Math.floor(newTotalPoints / POINTS_PER_TREE);
-        
-        const batch = writeBatch(db);
-        batch.update(userRef, {
-            totalPoints: newTotalPoints,
-            totalTrees: newTotalTrees,
-        });
+        try {
+            await runTransaction(db, async (transaction) => {
+                const userRef = doc(db, 'users', userId);
+                const communityStatsRef = doc(db, 'community-stats', 'global');
 
-        await batch.commit();
+                const userDoc = await transaction.get(userRef);
+                const communityStatsDoc = await transaction.get(communityStatsRef);
+
+                if (!userDoc.exists()) {
+                    throw new Error("User not found.");
+                }
+
+                // Calculate the difference in points
+                const currentUserPoints = userDoc.data().totalPoints || 0;
+                const pointDifference = newTotalPoints - currentUserPoints;
+                const newTotalTrees = Math.floor(newTotalPoints / POINTS_PER_TREE);
+
+                // Update user's points and trees
+                transaction.update(userRef, {
+                    totalPoints: newTotalPoints,
+                    totalTrees: newTotalTrees
+                });
+
+                // Update community stats with the point difference
+                if (communityStatsDoc.exists()) {
+                    const currentCommunityPoints = communityStatsDoc.data().totalClickPoints || 0;
+                    const newCommunityPoints = Math.max(0, currentCommunityPoints + pointDifference);
+                    
+                    transaction.update(communityStatsRef, {
+                        totalClickPoints: newCommunityPoints,
+                        // Note: We are not adjusting total community trees here as it's tied to approved submissions (TREES_PER_VALIDATION), not point adjustments. 
+                        // This prevents point adjustments from incorrectly creating/deleting community trees.
+                    });
+                } else if (pointDifference > 0) {
+                     transaction.set(communityStatsRef, {
+                        totalClickPoints: pointDifference,
+                        totalTreesPlanted: 0 // Start with 0 as this action doesn't plant a tree
+                    });
+                }
+            });
+        } catch (e) {
+            console.error('Transaction failed: ', e);
+            throw new Error(e instanceof Error ? e.message : 'Failed to update user points.');
+        }
     }
 );
 
@@ -151,4 +185,59 @@ export const extendUserTreeLimit = ai.defineFlow(
         });
         await batch.commit();
     }
+);
+
+const AddPointsToAdminInputSchema = z.object({
+  points: z.number().int().describe("The number of points to add or remove from the admin."),
+});
+export type AddPointsToAdminInput = z.infer<typeof AddPointsToAdminInputSchema>;
+
+
+export const addPointsToAdmin = ai.defineFlow(
+  {
+    name: 'addPointsToAdmin',
+    inputSchema: AddPointsToAdminInputSchema,
+    outputSchema: z.void(),
+    auth: (auth) => {
+      if (!auth || auth.email !== ADMIN_EMAIL) {
+        throw new Error("Only the admin can perform this action.");
+      }
+    },
+  },
+  async ({ points }, context) => {
+    if (!context.auth) {
+        throw new Error("Authentication context is missing.");
+    }
+    const adminId = context.auth.uid;
+    const adminEmail = context.auth.email;
+    const adminName = context.auth.displayName;
+    const userRef = doc(db, 'users', adminId);
+
+    await runTransaction(db, async (transaction) => {
+      const userDoc = await transaction.get(userRef);
+      
+      let currentPoints = 0;
+      if (userDoc.exists()) {
+        currentPoints = userDoc.data().totalPoints || 0;
+      }
+
+      const newTotalPoints = Math.max(0, currentPoints + points);
+      const newTotalTrees = Math.floor(newTotalPoints / POINTS_PER_TREE);
+
+      if (userDoc.exists()) {
+        transaction.update(userRef, {
+          totalPoints: newTotalPoints,
+          totalTrees: newTotalTrees,
+        });
+      } else {
+        transaction.set(userRef, {
+          displayName: adminName,
+          email: adminEmail,
+          totalPoints: newTotalPoints,
+          totalTrees: newTotalTrees,
+        });
+      }
+    });
+    // This flow does NOT affect community stats, as it's for testing purposes.
+  }
 );
