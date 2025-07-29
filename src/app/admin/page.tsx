@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, type UserData } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc } from 'firebase/firestore';
 import { deleteSubmission, updateUserPoints } from '@/ai/flows/admin-actions';
 import { LeafLoader } from '@/components/ui/leaf-loader';
 import {
@@ -43,9 +43,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { useDashboard } from '@/hooks/use-dashboard-store';
 
 
 interface FullUserData extends UserData {
@@ -100,7 +99,7 @@ function AnimatedCounter({ endValue }: { endValue: number }) {
 
 
 export default function AdminPage() {
-  const { user, loading, isAdmin } = useAuth();
+  const { user, userData, loading, isAdmin } = useAuth();
   const router = useRouter();
   const [pageLoading, setPageLoading] = useState(true);
   
@@ -113,11 +112,6 @@ export default function AdminPage() {
   
   const [manageUser, setManageUser] = useState<FullUserData | null>(null);
   const [newPoints, setNewPoints] = useState(0);
-
-  // Admin testing states
-  const { testPoints, setTestPoints, setTestDailyTrees, resetDailyTrees, testDailyTrees } = useDashboard();
-  const prevTestPointsRef = useRef<number | null>(null);
-
 
   const { toast } = useToast();
 
@@ -187,30 +181,6 @@ export default function AdminPage() {
     }
   }, [isAdmin]);
 
-   // Effect for simulating daily goal based on test points
-  useEffect(() => {
-    const DAILY_GOAL = 2; // Keep this consistent with the dashboard
-    const prevPoints = prevTestPointsRef.current ?? 0;
-    const currentPoints = testPoints ?? 0;
-
-    const prevTrees = Math.floor(prevPoints / 10);
-    const currentTrees = Math.floor(currentPoints / 10);
-    
-    if (currentPoints === 0) {
-        resetDailyTrees();
-    } else if (currentTrees > prevTrees) {
-        const treesEarned = currentTrees - prevTrees;
-        setTestDailyTrees(treesEarned);
-    }
-
-    if (testDailyTrees >= DAILY_GOAL) {
-      resetDailyTrees();
-    }
-    
-    prevTestPointsRef.current = currentPoints;
-  }, [testPoints, setTestDailyTrees, resetDailyTrees, testDailyTrees]);
-
-
   const handleDeleteSubmission = async (submissionId: string) => {
     try {
       await deleteSubmission(submissionId);
@@ -252,20 +222,6 @@ export default function AdminPage() {
     }
   };
 
-  const getAdminDisplayData = () => {
-    const adminUser = users.find(u => u.id === user?.uid);
-    const realPoints = adminUser?.totalPoints ?? 0;
-    
-    const simulatedPoints = testPoints !== null ? testPoints : realPoints;
-    const simulatedTrees = Math.floor(simulatedPoints / 10);
-    
-    return {
-        totalPoints: simulatedPoints,
-        totalTrees: simulatedTrees,
-    };
-  };
-
-
   if (loading || pageLoading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen">
@@ -279,8 +235,6 @@ export default function AdminPage() {
     return null; 
   }
   
-  const adminDisplayData = getAdminDisplayData();
-
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <div className="flex items-center gap-4 mb-8">
@@ -290,7 +244,7 @@ export default function AdminPage() {
         </h1>
       </div>
 
-       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -324,18 +278,6 @@ export default function AdminPage() {
               </div>
             </CardContent>
           </Card>
-           <Card className="bg-blue-50 border-blue-200">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-blue-800">Your Test Stats</CardTitle>
-                    <User className="h-4 w-4 text-blue-600" />
-                </CardHeader>
-                <CardContent>
-                    <p className="text-xs text-blue-700">
-                        Points: <span className="font-bold">{adminDisplayData.totalPoints.toLocaleString()}</span>, 
-                        Trees: <span className="font-bold">{adminDisplayData.totalTrees.toLocaleString()}</span>
-                    </p>
-                </CardContent>
-            </Card>
         </div>
 
       <div className="grid gap-8 lg:grid-cols-3">
@@ -372,8 +314,8 @@ export default function AdminPage() {
                                 <div className="font-medium">{u.displayName} {u.id === user?.uid && "(Admin)"}</div>
                                 <div className="text-xs text-muted-foreground">{u.email}</div>
                             </TableCell>
-                            <TableCell className="text-right font-mono">{u.id === user?.uid ? adminDisplayData.totalPoints.toLocaleString() : (u.totalPoints || 0).toLocaleString()}</TableCell>
-                            <TableCell className="text-right font-mono">{u.id === user?.uid ? adminDisplayData.totalTrees.toLocaleString() : (u.totalTrees || 0).toLocaleString()}</TableCell>
+                            <TableCell className="text-right font-mono">{(u.totalPoints || 0).toLocaleString()}</TableCell>
+                            <TableCell className="text-right font-mono">{(u.totalTrees || 0).toLocaleString()}</TableCell>
                             <TableCell className="text-center">
                                 <Button variant="ghost" size="icon" onClick={() => handleManageUser(u)}>
                                     <Edit className="h-4 w-4" />
@@ -394,28 +336,6 @@ export default function AdminPage() {
         
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <div className="space-y-8">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Edit className="h-5 w-5" />
-                            Admin Controls
-                        </CardTitle>
-                        <CardDescription>
-                        Simulate your total points to test the leaderboard and daily goals. These changes are visual only.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="test-points">Test Total Points</Label>
-                            <div className="flex items-center gap-2">
-                                <Button variant="outline" size="icon" onClick={() => setTestPoints(p => Math.max(0, (p || 0) - 10))}><Minus className="h-4 w-4" /></Button>
-                                <Input id="test-points" type="number" placeholder="Enter points..." value={testPoints ?? ''} onChange={(e) => setTestPoints(e.target.value === '' ? null : Number(e.target.value))} />
-                                <Button variant="outline" size="icon" onClick={() => setTestPoints(p => (p || 0) + 10)}><Plus className="h-4 w-4" /></Button>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
                 <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">

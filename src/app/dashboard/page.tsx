@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Coins, Leaf, Target, ShieldCheck, Crown, PartyPopper, CheckCircle, XCircle } from 'lucide-react';
-import { format, startOfDay, endOfDay } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,7 +47,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { useDashboard } from '@/hooks/use-dashboard-store';
 
 
 interface Submission {
@@ -103,8 +102,6 @@ export default function DashboardPage() {
   const [showPrivacyNotice, setShowPrivacyNotice] = useState(false);
   const [showLimitReached, setShowLimitReached] = useState(false);
   
-  const { testPoints, testDailyTrees } = useDashboard();
-
 
   useEffect(() => {
     if (!loading && !user) {
@@ -120,36 +117,17 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const getDisplayData = () => {
-    if (!userData) return { totalPoints: 0, totalTrees: 0, currentDailyTrees: 0 };
-    
-    if (isAdmin) {
-      const simulatedPoints = testPoints !== null ? testPoints : (userData.totalPoints || 0);
-      const simulatedTrees = Math.floor(simulatedPoints / 10);
-      return {
-        totalPoints: simulatedPoints,
-        totalTrees: simulatedTrees,
-        currentDailyTrees: testDailyTrees,
-      };
-    }
-    
-    return {
-      totalPoints: userData.totalPoints || 0,
-      totalTrees: userData.totalTrees || 0,
-      currentDailyTrees: dailyTrees,
-    };
-  };
-  
-  const displayData = getDisplayData();
+  const totalPoints = userData?.totalPoints || 0;
+  const totalTrees = userData?.totalTrees || 0;
 
 
   useEffect(() => {
     // Check if the user has reached the limit and hasn't seen the notification yet.
-    if (displayData.totalTrees >= USER_MAX_TREES && !sessionStorage.getItem('limitNotified')) {
+    if (totalTrees >= USER_MAX_TREES && !sessionStorage.getItem('limitNotified')) {
         setShowLimitReached(true);
         sessionStorage.setItem('limitNotified', 'true');
     }
-  }, [displayData.totalTrees]);
+  }, [totalTrees]);
 
 
   useEffect(() => {
@@ -185,9 +163,7 @@ export default function DashboardPage() {
         userSubmissions.sort((a, b) => b.date.toDate().getTime() - a.date.toDate().getTime());
         
         setSubmissions(userSubmissions);
-        if (!isAdmin) {
-            setDailyTrees(todayTreeCount);
-        }
+        setDailyTrees(todayTreeCount);
         setPageLoading(false);
       }, (error) => {
           console.error("Error fetching submissions:", error);
@@ -198,14 +174,14 @@ export default function DashboardPage() {
         unsubscribeSubmissions();
       };
     }
-  }, [user, isAdmin]);
+  }, [user]);
 
   useEffect(() => {
     setProgressValue(0);
-    const newProgress = Math.min((displayData.currentDailyTrees / DAILY_GOAL) * 100, 100);
+    const newProgress = Math.min((dailyTrees / DAILY_GOAL) * 100, 100);
     const animationTimeout = setTimeout(() => setProgressValue(newProgress), 100);
     return () => clearTimeout(animationTimeout);
-  }, [displayData.currentDailyTrees]);
+  }, [dailyTrees]);
 
   const handleClosePrivacyNotice = () => {
     setShowPrivacyNotice(false);
@@ -276,7 +252,7 @@ export default function DashboardPage() {
           <h1 className="font-headline text-3xl md:text-4xl font-bold">
             Your impact dashboard
           </h1>
-          {userData && displayData.totalPoints > 0 && (
+          {userData && totalPoints > 0 && (
              <motion.div
                 className="flex items-center gap-2 text-accent bg-accent/10 px-3 py-1 rounded-full cursor-pointer"
                 whileHover={{ scale: 1.03, transition: { duration: 0.2, ease: 'easeInOut' } }}
@@ -301,7 +277,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                <AnimatedCounter endValue={displayData.totalPoints} />
+                <AnimatedCounter endValue={totalPoints} />
               </div>
               <p className="text-xs text-muted-foreground">
                 Your lifetime contribution
@@ -315,7 +291,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                <AnimatedCounter endValue={displayData.totalTrees} />
+                <AnimatedCounter endValue={totalTrees} />
               </div>
               <p className="text-xs text-muted-foreground">
                 Thanks to your points! ({USER_MAX_TREES} max)
@@ -324,7 +300,7 @@ export default function DashboardPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Daily goal ({displayData.currentDailyTrees}/{DAILY_GOAL} Trees)</CardTitle>
+              <CardTitle className="text-sm font-medium">Daily goal ({dailyTrees}/{DAILY_GOAL} Trees)</CardTitle>
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
