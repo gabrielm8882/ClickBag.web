@@ -115,8 +115,8 @@ export default function AdminPage() {
   const [newPoints, setNewPoints] = useState(0);
 
   // Admin testing states
-  const { testPoints, setTestPoints, setTestDailyTrees } = useDashboard();
-  const prevTestTreesRef = useRef<number | null>(null);
+  const { testPoints, setTestPoints, setTestDailyTrees, resetDailyTrees, testDailyTrees } = useDashboard();
+  const prevTestPointsRef = useRef<number | null>(null);
 
 
   const { toast } = useToast();
@@ -189,31 +189,26 @@ export default function AdminPage() {
 
    // Effect for simulating daily goal based on test points
   useEffect(() => {
-    const adminUser = users.find(u => u.id === user?.uid);
-    const realPoints = adminUser?.totalPoints ?? 0;
-    const currentPoints = testPoints ?? realPoints;
+    const DAILY_GOAL = 2; // Keep this consistent with the dashboard
+    const prevPoints = prevTestPointsRef.current ?? 0;
+    const currentPoints = testPoints ?? 0;
+
+    const prevTrees = Math.floor(prevPoints / 10);
     const currentTrees = Math.floor(currentPoints / 10);
-
-    const prevTrees = prevTestTreesRef.current;
-
-    if (prevTrees !== null && currentTrees > prevTrees) {
-      const treesEarned = currentTrees - prevTrees;
-      setTestDailyTrees(currentDaily => {
-        const newDailyTotal = currentDaily + treesEarned;
-        const DAILY_GOAL = 2; // Keep this consistent with the dashboard
-        if (newDailyTotal >= DAILY_GOAL) {
-          return 0;
-        }
-        return newDailyTotal;
-      });
+    
+    if (currentPoints === 0) {
+        resetDailyTrees();
+    } else if (currentTrees > prevTrees) {
+        const treesEarned = currentTrees - prevTrees;
+        setTestDailyTrees(treesEarned);
     }
 
-    if (currentTrees === 0) {
-        setTestDailyTrees(0);
+    if (testDailyTrees >= DAILY_GOAL) {
+      resetDailyTrees();
     }
     
-    prevTestTreesRef.current = currentTrees;
-  }, [testPoints, users, user, setTestDailyTrees]);
+    prevTestPointsRef.current = currentPoints;
+  }, [testPoints, setTestDailyTrees, resetDailyTrees, testDailyTrees]);
 
 
   const handleDeleteSubmission = async (submissionId: string) => {
