@@ -205,12 +205,10 @@ export const addPointsToAdmin = ai.defineFlow(
     },
   },
   async ({ points }, context) => {
-    if (!context.auth) {
-        throw new Error("Authentication context is missing.");
-    }
-    const adminId = context.auth.uid;
-    const adminEmail = context.auth.email;
-    const adminName = context.auth.displayName;
+    // The auth policy above guarantees that context.auth will be defined here.
+    const adminId = context.auth!.uid;
+    const adminEmail = context.auth!.email;
+    const adminName = context.auth!.displayName;
     const userRef = doc(db, 'users', adminId);
 
     await runTransaction(db, async (transaction) => {
