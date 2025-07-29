@@ -5,8 +5,8 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, type UserData } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy, doc } from 'firebase/firestore';
-import { deleteSubmission, updateUserPoints } from '@/ai/flows/admin-actions';
+import { collection, onSnapshot, query, orderBy, doc, Timestamp } from 'firebase/firestore';
+import { deleteSubmission, updateUserPoints, extendUserTreeLimit } from '@/ai/flows/admin-actions';
 import { LeafLoader } from '@/components/ui/leaf-loader';
 import {
   Card,
@@ -29,7 +29,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Leaf, Coins, User, Users, History, CheckCircle, XCircle, Trash2, Edit, Save, Plus, Minus } from 'lucide-react';
+import { Shield, Leaf, Coins, User, Users, History, CheckCircle, XCircle, Trash2, Edit, Save, Plus, Minus, ArrowUpRight, Award } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import {
@@ -45,16 +45,18 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 
 interface FullUserData extends UserData {
     id: string;
+    maxTrees?: number;
 }
 
 interface Submission {
   id: string;
   userId: string;
-  date: any; 
+  date: Timestamp; 
   status: 'Approved' | 'Rejected';
   points: number;
   validationDetails: string;
@@ -99,7 +101,7 @@ function AnimatedCounter({ endValue }: { endValue: number }) {
 
 
 export default function AdminPage() {
-  const { user, userData, loading, isAdmin } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   const router = useRouter();
   const [pageLoading, setPageLoading] = useState(true);
   
@@ -110,8 +112,14 @@ export default function AdminPage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const userRowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
   
+  // State for the user management dialog
   const [manageUser, setManageUser] = useState<FullUserData | null>(null);
-  const [newPoints, setNewPoints] = useState(0);
+  const [pointsAdjustment, setPointsAdjustment] = useState(0);
+  const [adjustmentType, setAdjustmentType] = useState<'add' | 'subtract'>('add');
+  const [newMaxTrees, setNewMaxTrees] = useState(20);
+
+  // State for the user history dialog
+  const [historyUser, setHistoryUser] = useState<FullUserData | null>(null);
 
   const { toast } = useToast();
 
@@ -136,14 +144,12 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (isAdmin) {
-      // Fetch Community Stats
       const statsUnsubscribe = onSnapshot(doc(db, 'community-stats', 'global'), (doc) => {
         if (doc.exists()) {
             setCommunityStats(doc.data() as CommunityStats);
         }
       });
 
-      // Fetch Users and create a map for submissions
       const usersUnsubscribe = onSnapshot(query(collection(db, 'users'), orderBy('totalPoints', 'desc')), (usersSnapshot) => {
         const usersData: FullUserData[] = [];
         const userMap = new Map<string, string>();
@@ -155,14 +161,14 @@ export default function AdminPage() {
         });
         setUsers(usersData);
 
-        // Fetch Submissions and map user names
         const submissionsUnsubscribe = onSnapshot(query(collection(db, 'submissions'), orderBy('date', 'desc')), (submissionsSnapshot) => {
           const submissionsData: Submission[] = submissionsSnapshot.docs.map(doc => {
             const data = doc.data();
-            const userName = userMap.get(data.userId) || 'DelAco'; // Default to 'DelAco' if user not found
+            const userName = userMap.get(data.userId) || 'Anonymous';
             return {
               id: doc.id,
               userName,
+              date: data.date,
               ...data,
             } as Submission;
           });
@@ -200,20 +206,40 @@ export default function AdminPage() {
   
   const handleManageUser = (userToManage: FullUserData) => {
     setManageUser(userToManage);
-    setNewPoints(userToManage.totalPoints);
+    setPointsAdjustment(0);
+    setAdjustmentType('add');
+    setNewMaxTrees(userToManage.maxTrees || 20);
   };
   
-  const handleUpdateUserPoints = async () => {
+  const handleUpdateUser = async () => {
     if (!manageUser) return;
     try {
-      await updateUserPoints({ userId: manageUser.id, newTotalPoints: newPoints });
-      toast({
-        title: 'User Updated',
-        description: `${manageUser.displayName}'s points have been successfully updated.`,
-      });
+      // Points update
+      if (pointsAdjustment > 0) {
+        const currentPoints = manageUser.totalPoints || 0;
+        const newTotalPoints = adjustmentType === 'add' 
+          ? currentPoints + pointsAdjustment
+          : Math.max(0, currentPoints - pointsAdjustment);
+        
+        await updateUserPoints({ userId: manageUser.id, newTotalPoints });
+        toast({
+          title: 'User Points Updated',
+          description: `${manageUser.displayName}'s points have been successfully updated.`,
+        });
+      }
+
+      // Limit update
+      if (newMaxTrees !== (manageUser.maxTrees || 20)) {
+        await extendUserTreeLimit({ userId: manageUser.id, newLimit: newMaxTrees });
+         toast({
+          title: 'User Limit Updated',
+          description: `${manageUser.displayName}'s tree limit is now ${newMaxTrees}.`,
+        });
+      }
+
       setManageUser(null);
     } catch (error) {
-      console.error("Error updating user points:", error);
+      console.error("Error updating user:", error);
       toast({
         variant: 'destructive',
         title: 'Update Failed',
@@ -235,6 +261,8 @@ export default function AdminPage() {
     return null; 
   }
   
+  const userSubmissions = historyUser ? submissions.filter(s => s.userId === historyUser.id) : [];
+
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <div className="flex items-center gap-4 mb-8">
@@ -421,45 +449,106 @@ export default function AdminPage() {
             <DialogHeader>
               <DialogTitle>Manage {manageUser.displayName}</DialogTitle>
               <DialogDescription>
-                Directly update the user's total points. Trees will be recalculated.
+                Adjust points, extend tree limits, or view submission history.
               </DialogDescription>
             </DialogHeader>
-            <div className="py-4 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="points">Total Points</Label>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" onClick={() => setNewPoints(p => Math.max(0, p - 10))}>
-                        <Minus className="h-4 w-4" />
-                    </Button>
+            <div className="py-4 grid gap-6">
+                <div className="space-y-3">
+                    <Label>Adjust Points</Label>
+                    <RadioGroup defaultValue="add" value={adjustmentType} onValueChange={(v) => setAdjustmentType(v as any)} className="flex gap-4">
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="add" id="r-add" />
+                            <Label htmlFor="r-add">Add</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="subtract" id="r-subtract" />
+                            <Label htmlFor="r-subtract">Subtract</Label>
+                        </div>
+                    </RadioGroup>
                     <Input
                       id="points"
                       type="number"
-                      value={newPoints}
-                      onChange={(e) => setNewPoints(Number(e.target.value))}
-                      className="text-center"
+                      placeholder="Enter points to add/subtract"
+                      value={pointsAdjustment || ''}
+                      onChange={(e) => setPointsAdjustment(Math.max(0, Number(e.target.value)))}
                     />
-                     <Button variant="outline" size="icon" onClick={() => setNewPoints(p => p + 10)}>
-                        <Plus className="h-4 w-4" />
-                    </Button>
+                     <p className="text-sm text-muted-foreground text-center">
+                        Current Points: {manageUser.totalPoints} &rarr; New Total: {adjustmentType === 'add' ? manageUser.totalPoints + pointsAdjustment : Math.max(0, manageUser.totalPoints - pointsAdjustment)}
+                    </p>
                 </div>
-              </div>
-               <p className="text-sm text-muted-foreground text-center">
-                  New tree count: {Math.floor(newPoints / 10)}
-                </p>
+                <div className="space-y-3">
+                    <Label htmlFor="max-trees">Extend Tree Limit</Label>
+                     <Input
+                      id="max-trees"
+                      type="number"
+                      placeholder="Enter new tree limit"
+                      value={newMaxTrees}
+                      onChange={(e) => setNewMaxTrees(Math.max(0, Number(e.target.value)))}
+                    />
+                    <p className="text-sm text-muted-foreground text-center">
+                        Default limit is 20.
+                    </p>
+                </div>
             </div>
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setManageUser(null)}>Cancel</Button>
-              <Button onClick={handleUpdateUserPoints}>
-                <Save className="mr-2 h-4 w-4" />
-                Save Changes
-              </Button>
+            <DialogFooter className="grid grid-cols-2 gap-2 sm:grid-cols-none sm:flex">
+               <Button variant="secondary" onClick={() => { setHistoryUser(manageUser); setManageUser(null); }}>
+                    <History className="mr-2 h-4 w-4" /> View History
+                </Button>
+                <Button onClick={handleUpdateUser}>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save All Changes
+                </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
 
+      {historyUser && (
+         <Dialog open={!!historyUser} onOpenChange={() => setHistoryUser(null)}>
+            <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle>Submission History for {historyUser.displayName}</DialogTitle>
+                    <DialogDescription>
+                        A complete log of this user's submissions.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="mt-4 max-h-[60vh] overflow-y-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Points</TableHead>
+                                <TableHead>Details</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {userSubmissions.length > 0 ? userSubmissions.map(sub => (
+                                <TableRow key={sub.id}>
+                                    <TableCell>{format(sub.date.toDate(), 'Pp')}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={sub.status === 'Approved' ? 'default' : 'destructive'} className={cn(sub.status === 'Approved' ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200' : 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200')}>
+                                            {sub.status}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>{sub.points}</TableCell>
+                                    <TableCell className="text-xs max-w-xs truncate">{sub.validationDetails}</TableCell>
+                                </TableRow>
+                            )) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center">No submissions found for this user.</TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setHistoryUser(null)}>Close</Button>
+                </DialogFooter>
+            </DialogContent>
+         </Dialog>
+      )}
+
     </div>
   );
 }
-
-    

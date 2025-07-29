@@ -119,15 +119,16 @@ export default function DashboardPage() {
 
   const totalPoints = userData?.totalPoints || 0;
   const totalTrees = userData?.totalTrees || 0;
+  const maxTrees = userData?.maxTrees || USER_MAX_TREES;
 
 
   useEffect(() => {
     // Check if the user has reached the limit and hasn't seen the notification yet.
-    if (totalTrees >= USER_MAX_TREES && !sessionStorage.getItem('limitNotified')) {
+    if (totalTrees >= maxTrees && !sessionStorage.getItem('limitNotified')) {
         setShowLimitReached(true);
         sessionStorage.setItem('limitNotified', 'true');
     }
-  }, [totalTrees]);
+  }, [totalTrees, maxTrees]);
 
 
   useEffect(() => {
@@ -143,7 +144,7 @@ export default function DashboardPage() {
       );
       
       const unsubscribeSubmissions = onSnapshot(q, (querySnapshot) => {
-        const userSubmissions: Submission[] = [];
+        let userSubmissions: Submission[] = [];
         let todayTreeCount = 0;
         querySnapshot.forEach((doc) => {
             const data = doc.data();
@@ -209,7 +210,7 @@ export default function DashboardPage() {
               You're a Tree-Planting Champion!
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center pt-2">
-              Wow! You've reached the limit of {USER_MAX_TREES} planted trees. Your impact is incredible, and we're so grateful.
+              Wow! You've reached the limit of {maxTrees} planted trees. Your impact is incredible, and we're so grateful.
               <br/><br/>
               To continue planting more trees with your ClickBag, please contact us for a free account upgrade.
               <br/><br/>
@@ -294,7 +295,7 @@ export default function DashboardPage() {
                 <AnimatedCounter endValue={totalTrees} />
               </div>
               <p className="text-xs text-muted-foreground">
-                Thanks to your points! ({USER_MAX_TREES} max)
+                Thanks to your points! ({maxTrees} max)
               </p>
             </CardContent>
           </Card>
@@ -374,5 +375,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-    

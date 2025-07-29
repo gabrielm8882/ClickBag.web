@@ -52,7 +52,15 @@ export function Header() {
   };
 
   const handleUploadClick = () => {
-    if (userData && userData.totalTrees >= USER_MAX_TREES) {
+    // Admins are never blocked
+    if (isAdmin) {
+      router.push('/upload');
+      return;
+    }
+    
+    // Regular user check
+    const userMax = userData?.maxTrees || USER_MAX_TREES;
+    if (userData && userData.totalTrees >= userMax) {
       setShowLimitDialog(true);
     } else {
       router.push('/upload');
@@ -225,7 +233,7 @@ export function Header() {
               You've Reached the Summit!
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center pt-2">
-              Congratulations! You have reached the maximum contribution limit of {USER_MAX_TREES} trees for now. Your impact is amazing, and we're thrilled to have you in our community. Stay tuned for future updates on how you can contribute even more!
+               Congratulations! You have reached your current contribution limit. Your impact is amazing, and we're thrilled to have you in our community. Stay tuned for future updates on how you can contribute even more!
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -124,3 +124,31 @@ export const updateUserPoints = ai.defineFlow(
         await batch.commit();
     }
 );
+
+
+const ExtendUserTreeLimitInputSchema = z.object({
+    userId: z.string().describe("The ID of the user to update."),
+    newLimit: z.number().int().min(0).describe("The new maximum tree limit for the user."),
+});
+export type ExtendUserTreeLimitInput = z.infer<typeof ExtendUserTreeLimitInputSchema>;
+
+export const extendUserTreeLimit = ai.defineFlow(
+    {
+        name: 'extendUserTreeLimit',
+        inputSchema: ExtendUserTreeLimitInputSchema,
+        outputSchema: z.void(),
+        auth: (auth) => { // Auth policy to ensure only admins can run this
+            if (!auth || auth.email !== ADMIN_EMAIL) {
+                throw new Error("You must be an admin to perform this action.");
+            }
+        }
+    },
+    async ({ userId, newLimit }) => {
+        const userRef = doc(db, 'users', userId);
+        const batch = writeBatch(db);
+        batch.update(userRef, {
+            maxTrees: newLimit,
+        });
+        await batch.commit();
+    }
+);

@@ -109,13 +109,16 @@ const validateReceiptImageFlow = ai.defineFlow(
     // 1. Check if user has reached the tree limit
     const userDocRef = doc(db, 'users', uid);
     const userDoc = await getDoc(userDocRef);
-    const currentUserTrees = userDoc.data()?.totalTrees || 0;
+    const userData = userDoc.data();
+    const currentUserTrees = userData?.totalTrees || 0;
+    const maxTreesForUser = userData?.maxTrees || USER_MAX_TREES;
 
-    if (currentUserTrees >= USER_MAX_TREES) {
+
+    if (currentUserTrees >= maxTreesForUser) {
         return {
             isValid: false,
             clickPoints: 0,
-            validationDetails: `You have reached your contribution limit of ${USER_MAX_TREES} trees. Thank you for your amazing impact! Please contact us to extend your limit.`
+            validationDetails: `You have reached your contribution limit of ${maxTreesForUser} trees. Thank you for your amazing impact! Please contact us to extend your limit.`
         };
     }
 
@@ -225,5 +228,3 @@ const validateReceiptImageFlow = ai.defineFlow(
     return output;
   }
 );
-
-    

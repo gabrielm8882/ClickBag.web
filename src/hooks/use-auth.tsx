@@ -26,6 +26,7 @@ export interface UserData {
   totalTrees: number;
   displayName?: string;
   email?: string;
+  maxTrees?: number;
 }
 
 interface AuthContextType {
