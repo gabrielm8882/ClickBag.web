@@ -271,6 +271,10 @@ export default function AdminPage() {
   
   const userSubmissions = historyUser ? submissions.filter(s => s.userId === historyUser.id) : [];
 
+  const adminUser = users.find(u => u.id === user?.uid);
+  const otherUsers = users.filter(u => u.id !== user?.uid);
+  const sortedUsers = adminUser ? [adminUser, ...otherUsers] : users;
+
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <div className="flex items-center gap-4 mb-8">
@@ -340,15 +344,22 @@ export default function AdminPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {users.length > 0 ? users.map((u) => (
+                        {sortedUsers.length > 0 ? sortedUsers.map((u) => (
                         <TableRow 
                           key={u.id}
                           ref={(el) => (userRowRefs.current[u.id] = el)}
-                          className={cn({ 'bg-accent/20': selectedUserId === u.id })}
+                          className={cn({
+                            'bg-accent/20': selectedUserId === u.id,
+                            'bg-orange-50 dark:bg-orange-950/50': u.id === user?.uid
+                          })}
                         >
                             <TableCell>
-                                <div className="font-medium">{u.displayName} {u.id === user?.uid && "(Admin)"}</div>
-                                <div className="text-xs text-muted-foreground">{u.email}</div>
+                                <div className={cn("font-medium", { 'text-orange-600 dark:text-orange-400': u.id === user?.uid})}>
+                                  {u.displayName} {u.id === user?.uid && "(Admin)"}
+                                </div>
+                                <div className={cn("text-xs text-muted-foreground", { 'text-orange-500 dark:text-orange-500': u.id === user?.uid})}>
+                                  {u.email}
+                                </div>
                             </TableCell>
                             <TableCell className="text-right font-mono">{(u.totalPoints || 0).toLocaleString()}</TableCell>
                             <TableCell className="text-right font-mono">{(u.totalTrees || 0).toLocaleString()}</TableCell>
