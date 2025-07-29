@@ -23,7 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Coins, Leaf, Target, ShieldCheck, Crown, PartyPopper, CheckCircle, XCircle } from 'lucide-react';
+import { Coins, Leaf, Target, ShieldCheck, Crown, PartyPopper, CheckCircle, XCircle, Eye } from 'lucide-react';
 import { format, startOfDay } from 'date-fns';
 import {
   AlertDialog,
@@ -47,6 +47,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { Button } from '@/components/ui/button';
 
 
 interface Submission {
@@ -124,11 +125,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Check if the user has reached the limit and hasn't seen the notification yet.
-    if (totalTrees >= maxTrees && !sessionStorage.getItem('limitNotified')) {
+    if (!isAdmin && totalTrees >= maxTrees && !sessionStorage.getItem('limitNotified')) {
         setShowLimitReached(true);
         sessionStorage.setItem('limitNotified', 'true');
     }
-  }, [totalTrees, maxTrees]);
+  }, [totalTrees, maxTrees, isAdmin]);
 
 
   useEffect(() => {
@@ -270,7 +271,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total ClickPoints</CardTitle>
@@ -309,6 +310,20 @@ export default function DashboardPage() {
               <Progress value={progressValue} className="mt-2 [&>div]:bg-accent" />
             </CardContent>
           </Card>
+          {isAdmin && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Admin Tools</CardTitle>
+                <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                 <Button variant="outline" size="sm" className="w-full" onClick={() => setShowLimitReached(true)}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Preview Limit Pop-up
+                 </Button>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <Card>
@@ -375,3 +390,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    
