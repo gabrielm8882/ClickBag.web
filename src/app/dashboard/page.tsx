@@ -23,7 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Coins, Leaf, Target, ShieldCheck, Crown, PartyPopper, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { Coins, Leaf, Target, ShieldCheck, Crown, PartyPopper, CheckCircle, XCircle, Eye, Plus, Minus } from 'lucide-react';
 import { format, startOfDay } from 'date-fns';
 import {
   AlertDialog,
@@ -48,6 +48,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Button } from '@/components/ui/button';
+import { addPointsToAdmin } from '@/ai/flows/admin-actions';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface Submission {
@@ -102,6 +104,7 @@ export default function DashboardPage() {
   const [progressValue, setProgressValue] = useState(0);
   const [showPrivacyNotice, setShowPrivacyNotice] = useState(false);
   const [showLimitReached, setShowLimitReached] = useState(false);
+  const { toast } = useToast();
   
 
   useEffect(() => {
@@ -187,6 +190,23 @@ export default function DashboardPage() {
 
   const handleClosePrivacyNotice = () => {
     setShowPrivacyNotice(false);
+  };
+
+  const handleAdminPointsAdjustment = async (points: number) => {
+    try {
+      await addPointsToAdmin({ points });
+      toast({
+        title: 'Test Points Updated',
+        description: `Your points have been adjusted by ${points}. This does not affect community stats.`
+      });
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: error instanceof Error ? error.message : 'An unknown error occurred.',
+      })
+    }
   };
   
   if (loading || pageLoading || !user || !userData) {
@@ -312,11 +332,22 @@ export default function DashboardPage() {
           </Card>
           {isAdmin && (
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Admin Tools</CardTitle>
-                <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center justify-between">
+                    <span>Admin Controls</span>
+                    <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                </CardTitle>
+                 <CardDescription className="text-xs pt-1">Adjust your test points (no community impact).</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex flex-col gap-2">
+                 <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" className="w-full" onClick={() => handleAdminPointsAdjustment(-10)}>
+                        <Minus className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="sm" className="w-full" onClick={() => handleAdminPointsAdjustment(10)}>
+                        <Plus className="h-4 w-4" />
+                    </Button>
+                 </div>
                  <Button variant="outline" size="sm" className="w-full" onClick={() => setShowLimitReached(true)}>
                     <Eye className="mr-2 h-4 w-4" />
                     Preview Limit Pop-up
