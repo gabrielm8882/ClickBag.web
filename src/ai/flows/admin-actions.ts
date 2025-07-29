@@ -202,13 +202,14 @@ export const addPointsToAdmin = ai.defineFlow(
       if (!auth || auth.email !== ADMIN_EMAIL) {
         throw new Error("Only the admin can perform this action.");
       }
+      return auth; // Pass the auth object to the flow's implementation
     },
   },
-  async ({ points }, context) => {
-    // The auth policy above guarantees that context.auth will be defined here.
-    const adminId = context.auth!.uid;
-    const adminEmail = context.auth!.email;
-    const adminName = context.auth!.displayName;
+  async ({ points }, auth) => {
+    // The auth policy above guarantees that auth will be defined here.
+    const adminId = auth.uid;
+    const adminEmail = auth.email;
+    const adminName = auth.displayName;
     const userRef = doc(db, 'users', adminId);
 
     await runTransaction(db, async (transaction) => {
