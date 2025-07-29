@@ -63,5 +63,3 @@ export async function addPointsToAdminAction(input: AddPointsToAdminInput): Prom
     throw new Error(errorMessage);
   }
 }
-
-    
