@@ -6,8 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth, type UserData } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, orderBy, doc, Timestamp } from 'firebase/firestore';
-import { deleteSubmission, updateUserPoints, extendUserTreeLimit, addPointsToAdmin as addPointsToAdminFlow } from '@/ai/flows/admin-actions';
-import { getFlow } from '@genkit-ai/next/client';
+import { deleteSubmissionAction, updateUserPointsAction, extendUserTreeLimitAction, addPointsToAdminAction } from '@/lib/admin-actions';
 import { LeafLoader } from '@/components/ui/leaf-loader';
 import {
   Card,
@@ -189,7 +188,7 @@ export default function AdminPage() {
 
   const handleDeleteSubmission = async (submissionId: string) => {
     try {
-      await deleteSubmission(submissionId);
+      await deleteSubmissionAction(submissionId);
       toast({
         title: 'Submission Deleted',
         description: 'The submission and its associated points have been removed.',
@@ -220,8 +219,7 @@ export default function AdminPage() {
       if (pointsAdjustment !== 0) {
         if (isEditingSelf) {
           // Use the test-only flow for the admin editing themselves
-          const addPointsToAdmin = await getFlow('addPointsToAdmin', addPointsToAdminFlow);
-          await addPointsToAdmin({ points: pointsAdjustment });
+          await addPointsToAdminAction({ points: pointsAdjustment });
           toast({
             title: 'Test Points Updated',
             description: `Your test points have been adjusted by ${pointsAdjustment}. This did not affect community stats.`,
@@ -230,7 +228,7 @@ export default function AdminPage() {
           // Use the real flow for editing other users
           const currentPoints = manageUser.totalPoints || 0;
           const newTotalPoints = Math.max(0, currentPoints + pointsAdjustment);
-          await updateUserPoints({ userId: manageUser.id, newTotalPoints });
+          await updateUserPointsAction({ userId: manageUser.id, newTotalPoints });
           toast({
             title: 'User Points Updated',
             description: `${manageUser.displayName}'s points have been successfully updated.`,
@@ -241,7 +239,7 @@ export default function AdminPage() {
 
       // Limit update
       if (newMaxTrees !== (manageUser.maxTrees || 20)) {
-        await extendUserTreeLimit({ userId: manageUser.id, newLimit: newMaxTrees });
+        await extendUserTreeLimitAction({ userId: manageUser.id, newLimit: newMaxTrees });
          toast({
           title: 'User Limit Updated',
           description: `${manageUser.displayName}'s tree limit is now ${newMaxTrees}.`,
@@ -580,4 +578,6 @@ export default function AdminPage() {
 }
 
     
+    
+
     
