@@ -8,7 +8,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, writeBatch, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, writeBatch, runTransaction, collection } from 'firebase/firestore';
 
 const ADMIN_EMAIL = "click.bag.sp@gmail.com";
 const POINTS_PER_TREE = 10;
@@ -241,5 +241,3 @@ export const addPointsToAdmin = ai.defineFlow(
     // This flow does NOT affect community stats, as it's for testing purposes.
   }
 );
-
-    
