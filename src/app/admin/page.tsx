@@ -115,7 +115,6 @@ export default function AdminPage() {
   // State for the user management dialog
   const [manageUser, setManageUser] = useState<FullUserData | null>(null);
   const [pointsAdjustment, setPointsAdjustment] = useState(0);
-  const [adjustmentType, setAdjustmentType] = useState<'add' | 'subtract'>('add');
   const [newMaxTrees, setNewMaxTrees] = useState(20);
 
   // State for the user history dialog
@@ -207,25 +206,25 @@ export default function AdminPage() {
   const handleManageUser = (userToManage: FullUserData) => {
     setManageUser(userToManage);
     setPointsAdjustment(0);
-    setAdjustmentType('add');
     setNewMaxTrees(userToManage.maxTrees || 20);
   };
   
   const handleUpdateUser = async () => {
     if (!manageUser) return;
     try {
+      let updated = false;
+
       // Points update
-      if (pointsAdjustment > 0) {
+      if (pointsAdjustment !== 0) {
         const currentPoints = manageUser.totalPoints || 0;
-        const newTotalPoints = adjustmentType === 'add' 
-          ? currentPoints + pointsAdjustment
-          : Math.max(0, currentPoints - pointsAdjustment);
+        const newTotalPoints = currentPoints + pointsAdjustment;
         
         await updateUserPoints({ userId: manageUser.id, newTotalPoints });
         toast({
           title: 'User Points Updated',
           description: `${manageUser.displayName}'s points have been successfully updated.`,
         });
+        updated = true;
       }
 
       // Limit update
@@ -235,9 +234,18 @@ export default function AdminPage() {
           title: 'User Limit Updated',
           description: `${manageUser.displayName}'s tree limit is now ${newMaxTrees}.`,
         });
+        updated = true;
       }
 
-      setManageUser(null);
+      if (updated) {
+        setManageUser(null);
+      } else {
+        toast({
+            title: 'No Changes',
+            description: 'No changes were made to the user.',
+        });
+      }
+
     } catch (error) {
       console.error("Error updating user:", error);
       toast({
@@ -455,29 +463,19 @@ export default function AdminPage() {
             <div className="py-4 grid gap-6">
                 <div className="space-y-3">
                     <Label>Adjust Points (in intervals of 10)</Label>
-                    <RadioGroup defaultValue="add" value={adjustmentType} onValueChange={(v) => setAdjustmentType(v as any)} className="flex gap-4">
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="add" id="r-add" />
-                            <Label htmlFor="r-add">Add</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="subtract" id="r-subtract" />
-                            <Label htmlFor="r-subtract">Subtract</Label>
-                        </div>
-                    </RadioGroup>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" onClick={() => setPointsAdjustment(p => Math.max(0, p - 10))}>
+                        <Button variant="outline" size="icon" onClick={() => setPointsAdjustment(p => p - 10)}>
                             <Minus className="h-4 w-4" />
                         </Button>
                         <div className="flex-1 text-center font-bold text-lg p-2 border rounded-md">
-                           {pointsAdjustment}
+                           {pointsAdjustment > 0 ? '+' : ''}{pointsAdjustment}
                         </div>
                         <Button variant="outline" size="icon" onClick={() => setPointsAdjustment(p => p + 10)}>
                            <Plus className="h-4 w-4" />
                         </Button>
                     </div>
                      <p className="text-sm text-muted-foreground text-center">
-                        Current Points: {manageUser.totalPoints} &rarr; New Total: {adjustmentType === 'add' ? manageUser.totalPoints + pointsAdjustment : Math.max(0, manageUser.totalPoints - pointsAdjustment)}
+                        Current Points: {manageUser.totalPoints || 0} &rarr; New Total: {Math.max(0, (manageUser.totalPoints || 0) + pointsAdjustment)}
                     </p>
                 </div>
                 <div className="space-y-3">
