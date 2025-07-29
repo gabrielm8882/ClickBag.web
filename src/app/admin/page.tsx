@@ -454,7 +454,7 @@ export default function AdminPage() {
             </DialogHeader>
             <div className="py-4 grid gap-6">
                 <div className="space-y-3">
-                    <Label>Adjust Points</Label>
+                    <Label>Adjust Points (in intervals of 10)</Label>
                     <RadioGroup defaultValue="add" value={adjustmentType} onValueChange={(v) => setAdjustmentType(v as any)} className="flex gap-4">
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="add" id="r-add" />
@@ -465,13 +465,17 @@ export default function AdminPage() {
                             <Label htmlFor="r-subtract">Subtract</Label>
                         </div>
                     </RadioGroup>
-                    <Input
-                      id="points"
-                      type="number"
-                      placeholder="Enter points to add/subtract"
-                      value={pointsAdjustment || ''}
-                      onChange={(e) => setPointsAdjustment(Math.max(0, Number(e.target.value)))}
-                    />
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="icon" onClick={() => setPointsAdjustment(p => Math.max(0, p - 10))}>
+                            <Minus className="h-4 w-4" />
+                        </Button>
+                        <div className="flex-1 text-center font-bold text-lg p-2 border rounded-md">
+                           {pointsAdjustment}
+                        </div>
+                        <Button variant="outline" size="icon" onClick={() => setPointsAdjustment(p => p + 10)}>
+                           <Plus className="h-4 w-4" />
+                        </Button>
+                    </div>
                      <p className="text-sm text-muted-foreground text-center">
                         Current Points: {manageUser.totalPoints} &rarr; New Total: {adjustmentType === 'add' ? manageUser.totalPoints + pointsAdjustment : Math.max(0, manageUser.totalPoints - pointsAdjustment)}
                     </p>
