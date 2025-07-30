@@ -116,14 +116,12 @@ export default function SponsorsPage() {
                 Join us in our mission to turn everyday actions into a powerful force for good.
              </p>
              <p className="text-xl font-semibold">
-                Contact us via Instagram DMs:{' '}
+                Contact us via email:{' '}
                 <a
-                  href="https://www.instagram.com/click_bag_"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="mailto:click.bag.sp@gmail.com"
                   className="text-accent hover:underline"
                 >
-                  @click_bag_
+                  click.bag.sp@gmail.com
                 </a>
             </p>
         </motion.div>

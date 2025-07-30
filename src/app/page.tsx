@@ -346,14 +346,12 @@ export default function Home() {
                 </Button>
             </Link>
             <p className="text-lg font-semibold">
-              Or, DM us on Instagram:{' '}
+              Contact us at:{' '}
               <a
-                href="https://www.instagram.com/click_bag_"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="mailto:click.bag.sp@gmail.com"
                 className="text-accent hover:underline"
               >
-                @click_bag_
+                click.bag.sp@gmail.com
               </a>
             </p>
           </div>
