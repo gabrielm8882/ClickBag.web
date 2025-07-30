@@ -37,6 +37,10 @@ const ValidateReceiptImageOutputSchema = z.object({
   clickPoints: z.number().describe('The number of ClickPoints awarded to the user.'),
   geolocation: z.string().optional().describe('The geolocation of the purchase, if available.'),
   validationDetails: z.string().describe('The AI analysis validation details.'),
+  // Fields for receipt content hashing
+  storeName: z.string().optional().describe('The name of the store extracted from the receipt.'),
+  receiptDate: z.string().optional().describe('The date of the purchase from the receipt (e.g., YYYY-MM-DD).'),
+  totalAmount: z.string().optional().describe('The total amount of the purchase from the receipt.'),
 });
 export type ValidateReceiptImageOutput = z.infer<typeof ValidateReceiptImageOutputSchema>;
 
@@ -72,6 +76,10 @@ You must perform the following checks with scrutiny:
     b. If the user's location is provided, use it as a hint. The user does NOT need to be at the store. A valid submission can come from their home. Check if the purchase city on the receipt is plausibly the same as the user's location city.
     c. If location data is not available from the receipt or the user, do not fail the validation on this point alone.
     d. In your output, set the 'geolocation' field to the city and country you identify from the receipt, if possible.
+5.  **Receipt Content Extraction (via OCR)**:
+    a. Extract the store's name and set it to the 'storeName' field.
+    b. Extract the purchase date and set it to the 'receiptDate' field in YYYY-MM-DD format.
+    c. Extract the final total amount of the purchase and set it to the 'totalAmount' field. If not possible, leave these fields null.
 
 **Final Decision:**
 
@@ -132,12 +140,12 @@ const validateReceiptImageFlow = ai.defineFlow(
 
     const imageHash = crypto.createHash('sha256').update(compressedImageBuffer).digest('hex');
 
-    // 3. Duplicate Check in Firestore
+    // 3. Duplicate Image Check in Firestore
     const submissionsRef = collection(db, 'submissions');
-    const q = query(submissionsRef, where('imageHash', '==', imageHash));
-    const querySnapshot = await getDocs(q);
+    const imageQuery = query(submissionsRef, where('imageHash', '==', imageHash));
+    const imageQuerySnapshot = await getDocs(imageQuery);
 
-    if (!querySnapshot.empty) {
+    if (!imageQuerySnapshot.empty) {
         return {
             isValid: false,
             clickPoints: 0,
@@ -159,8 +167,31 @@ const validateReceiptImageFlow = ai.defineFlow(
     if (!output) {
       throw new Error('AI validation failed to produce an output.');
     }
+    
+    // 5. Receipt Content Hash Check
+    let receiptContentHash: string | null = null;
+    if (output.isValid && output.storeName && output.receiptDate && output.totalAmount) {
+        const contentString = `${output.storeName}-${output.receiptDate}-${output.totalAmount}`;
+        receiptContentHash = crypto.createHash('sha256').update(contentString).digest('hex');
 
-    // 5. Firestore Updates
+        const contentQuery = query(
+            submissionsRef, 
+            where('userId', '==', uid),
+            where('receiptContentHash', '==', receiptContentHash)
+        );
+        const contentQuerySnapshot = await getDocs(contentQuery);
+
+        if (!contentQuerySnapshot.empty) {
+            return {
+                isValid: false,
+                clickPoints: 0,
+                validationDetails: 'This receipt appears to have been submitted already. Each unique purchase can only be validated once.',
+            };
+        }
+    }
+
+
+    // 6. Firestore Updates
     try {
       await runTransaction(db, async (transaction) => {
         // Add to submissions history
@@ -172,7 +203,8 @@ const validateReceiptImageFlow = ai.defineFlow(
             points: output.clickPoints,
             geolocation: output.geolocation || 'N/A',
             validationDetails: output.validationDetails,
-            imageHash: imageHash, 
+            imageHash: imageHash,
+            receiptContentHash: receiptContentHash,
         });
 
         if (output.isValid) {
