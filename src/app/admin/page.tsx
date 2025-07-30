@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth, type UserData } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, orderBy, doc, Timestamp } from 'firebase/firestore';
-import { deleteSubmissionAction, updateUserPointsAction, extendUserTreeLimitAction, addPointsToAdminAction } from '@/lib/admin-actions';
+import { deleteSubmissionAction, updateUserPointsAction, extendUserTreeLimitAction } from '@/lib/admin-actions';
 import { LeafLoader } from '@/components/ui/leaf-loader';
 import {
   Card,
@@ -213,27 +213,16 @@ export default function AdminPage() {
     if (!manageUser || !user) return;
     try {
       let updated = false;
-      const isEditingSelf = manageUser.id === user.uid;
 
       // Points update
       if (pointsAdjustment !== 0) {
-        if (isEditingSelf) {
-          // Use the test-only flow for the admin editing themselves
-          await addPointsToAdminAction({ points: pointsAdjustment });
-          toast({
-            title: 'Test Points Updated',
-            description: `Your test points have been adjusted by ${pointsAdjustment}. This did not affect community stats.`,
-          });
-        } else {
-          // Use the real flow for editing other users
-          const currentPoints = manageUser.totalPoints || 0;
-          const newTotalPoints = Math.max(0, currentPoints + pointsAdjustment);
-          await updateUserPointsAction({ userId: manageUser.id, newTotalPoints });
-          toast({
-            title: 'User Points Updated',
-            description: `${manageUser.displayName}'s points have been successfully updated.`,
-          });
-        }
+        const currentPoints = manageUser.totalPoints || 0;
+        const newTotalPoints = Math.max(0, currentPoints + pointsAdjustment);
+        await updateUserPointsAction({ userId: manageUser.id, newTotalPoints });
+        toast({
+          title: 'User Points Updated',
+          description: `${manageUser.displayName}'s points have been successfully updated.`,
+        });
         updated = true;
       }
 

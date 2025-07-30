@@ -5,10 +5,8 @@ import {
   deleteSubmission,
   updateUserPoints,
   extendUserTreeLimit,
-  addPointsToAdmin,
   type UpdateUserPointsInput,
   type ExtendUserTreeLimitInput,
-  type AddPointsToAdminInput,
 } from '@/ai/flows/admin-actions';
 
 /**
@@ -47,19 +45,6 @@ export async function extendUserTreeLimitAction(input: ExtendUserTreeLimitInput)
   } catch (e) {
     console.error("extendUserTreeLimitAction failed:", e);
     const errorMessage = e instanceof Error ? e.message : "An unexpected error occurred while extending user's tree limit.";
-    throw new Error(errorMessage);
-  }
-}
-
-/**
- * Server action for an admin to add points to their own account for testing.
- */
-export async function addPointsToAdminAction(input: AddPointsToAdminInput): Promise<void> {
-  try {
-    await addPointsToAdmin(input);
-  } catch (e) {
-    console.error("addPointsToAdminAction failed:", e);
-    const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred while adjusting admin points.';
     throw new Error(errorMessage);
   }
 }
