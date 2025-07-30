@@ -37,7 +37,7 @@ export default function UploadForm() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ValidateReceiptImageOutput | null>(null);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [locationStatus, setLocationStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [locationStatus, setLocationStatus] = useState<'loading' | 'success' | 'warning' | 'error'>('loading');
   const [locationError, setLocationError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -53,20 +53,20 @@ export default function UploadForm() {
           setLocationError(null);
         },
         (error) => {
-          let message = "An unknown error occurred.";
+          let message = "Could not get location. You can still submit, but including location improves validation accuracy.";
           switch (error.code) {
             case error.PERMISSION_DENIED:
-              message = "You must enable location access in your browser to submit a validation.";
+              message = "Location access denied. You can still submit, but including location is recommended.";
               break;
             case error.POSITION_UNAVAILABLE:
-              message = "Your location information is currently unavailable. Please try again later.";
+              message = "Location information is unavailable. You can still proceed with your submission.";
               break;
             case error.TIMEOUT:
-              message = "The request to get your location timed out. Please check your connection.";
+              message = "Request for location timed out. You may continue without it.";
               break;
           }
           setLocationError(message);
-          setLocationStatus('error');
+          setLocationStatus('warning');
         }, {
           enableHighAccuracy: true,
           timeout: 10000,
@@ -74,8 +74,8 @@ export default function UploadForm() {
         }
       );
     } else {
-      setLocationError("Geolocation is not supported by this browser. You cannot submit a validation.");
-      setLocationStatus('error');
+      setLocationError("Geolocation is not supported by this browser. You can still submit your photo.");
+      setLocationStatus('warning');
     }
   }, []);
 
@@ -107,10 +107,6 @@ export default function UploadForm() {
       setError('Please provide a photo.');
       return;
     }
-    if (!userLocation) {
-        setError('Could not submit. Location is mandatory and not available.');
-        return;
-    }
     setError(null);
     setIsLoading(true);
 
@@ -119,8 +115,8 @@ export default function UploadForm() {
 
       const aiResult = await handleImageUpload({
         photoDataUri,
-        userLatitude: userLocation.latitude,
-        userLongitude: userLocation.longitude,
+        userLatitude: userLocation?.latitude,
+        userLongitude: userLocation?.longitude,
       });
       
       setResult(aiResult);
@@ -147,9 +143,10 @@ export default function UploadForm() {
                 transition={{ duration: 0.5 }}
             >
                 <Alert className={cn({
-                    "bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-950 dark:border-yellow-800 dark:text-yellow-300": locationStatus === 'loading',
+                    "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-300": locationStatus === 'loading',
                     "bg-green-50 border-green-200 text-green-800 dark:bg-green-950 dark:border-green-800 dark:text-green-300": locationStatus === 'success',
-                    "border-destructive/50 text-destructive": locationStatus === 'error',
+                    "bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-950 dark:border-yellow-800 dark:text-yellow-300": locationStatus === 'warning',
+                    "border-destructive/50 text-destructive": locationStatus === 'error', // Should not happen now
                 })}>
                   <MapPin className={cn("h-4 w-4", {
                       "animate-pulse": locationStatus === 'loading',
@@ -157,12 +154,12 @@ export default function UploadForm() {
                   <AlertTitle>
                       {locationStatus === 'loading' && 'Fetching Location...'}
                       {locationStatus === 'success' && 'Location Acquired'}
-                      {locationStatus === 'error' && 'Location Required'}
+                      {locationStatus === 'warning' && 'Location Recommended'}
                   </AlertTitle>
                   <AlertDescription>
-                    {locationStatus === 'loading' && 'We are accessing your location for validation. Please wait.'}
-                    {locationStatus === 'success' && 'For best results, please submit your photo while you are still at or near the store.'}
-                    {locationStatus === 'error' && locationError}
+                    {locationStatus === 'loading' && 'Accessing your location to improve validation accuracy. Please wait...'}
+                    {locationStatus === 'success' && 'Location captured successfully. For best results, submit your photo near the store.'}
+                    {locationStatus === 'warning' && locationError}
                   </AlertDescription>
                 </Alert>
             </motion.div>
@@ -246,7 +243,7 @@ export default function UploadForm() {
           </Alert>
         )}
 
-        <Button type="submit" className="w-full shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow" size="lg" disabled={isLoading || !photo || locationStatus !== 'success'}>
+        <Button type="submit" className="w-full shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow" size="lg" disabled={isLoading || !photo}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

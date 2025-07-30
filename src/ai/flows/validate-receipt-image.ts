@@ -27,8 +27,8 @@ const ValidateReceiptImageInputSchema = z.object({
     .describe(
       "A photo of the purchased item and receipt together, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
-  userLatitude: z.number().describe("The user's current latitude."),
-  userLongitude: z.number().describe("The user's current longitude."),
+  userLatitude: z.number().optional().describe("The user's current latitude (if available)."),
+  userLongitude: z.number().optional().describe("The user's current longitude (if available)."),
 });
 export type ValidateReceiptImageInput = z.infer<typeof ValidateReceiptImageInputSchema>;
 
@@ -55,30 +55,30 @@ const validateReceiptImagePrompt = ai.definePrompt({
   output: {schema: ValidateReceiptImageOutputSchema},
   prompt: `You are an AI assistant that validates a user-submitted photo for a sustainability rewards program called ClickBag.
 The current server time is {{currentDateTime}} (in ISO 8601 format). You MUST use this as the absolute reference for "now".
-The user's current location is Latitude: {{userLatitude}}, Longitude: {{userLongitude}}.
+The user's current location, if provided, is Latitude: {{userLatitude}}, Longitude: {{userLongitude}}. This is a hint, not a strict requirement.
 
 The user has submitted a SINGLE photo that MUST contain two items:
 1. A shopping bag (for now, any shopping bag is acceptable).
 2. A clear, unaltered photograph of a real paper receipt for a purchase.
 
-You must perform the following checks with extreme scrutiny:
+You must perform the following checks with scrutiny:
 1.  **Bag & Receipt Presence**: Confirm that BOTH a shopping bag and a paper receipt are clearly visible in the single image.
-2.  **Authenticity Check**: The image must be a genuine photograph. It CANNOT be a screenshot, a digital document, or an AI-generated image. Scrutinize it for any signs of digital manipulation or artificial generation. If you suspect the image is not a real photo, you must reject the submission.
+2.  **Authenticity Check**: The image must be a genuine photograph. It CANNOT be a screenshot, a digital document, or an AI-generated image. The user might upload the photo from home later in the day, which is perfectly acceptable. Scrutinize it for any signs of digital manipulation or artificial generation. If you suspect the image is not a real photo, you must reject the submission.
 3.  **Date & Time Validation (via OCR)**:
-    a. Use OCR to read the date and time from the receipt in the photo.
-    b. The receipt must be for a purchase made on the same calendar day relative to the current server time ({{currentDateTime}}).
-    c. A receipt dated today is valid even if its time appears to be in the "future" from the server's perspective, as it could be from a different timezone.
-4.  **Location Validation (via OCR)**:
-    a. Use OCR to read the store's name, city, and/or address from the receipt. This is the purchase location.
-    b. Compare the purchase location to the user's provided coordinates. They must be plausibly close (e.g., within the same city or a reasonable driving distance). If they are too far apart, reject the submission.
-    c. In your output, set the 'geolocation' field to the city and country you identify from the receipt.
+    a. Use OCR to read the date from the receipt in the photo.
+    b. The receipt must be for a purchase made on the same calendar day relative to the current server time ({{currentDateTime}}). The time of day on the receipt does not matter.
+4.  **Location Validation (via OCR & Geolocation Hint)**:
+    a. Attempt to use OCR to read the store's name and city from the receipt.
+    b. If the user's location is provided, use it as a hint. The user does NOT need to be at the store. A valid submission can come from their home. Check if the purchase city on the receipt is plausibly the same as the user's location city.
+    c. If location data is not available from the receipt or the user, do not fail the validation on this point alone.
+    d. In your output, set the 'geolocation' field to the city and country you identify from the receipt, if possible.
 
 **Final Decision:**
 
 If ALL checks pass:
 - Set 'isValid' to true.
 - Award exactly 10 ClickPoints.
-- Provide a detailed success message in 'validationDetails'.
+- Provide a detailed success message in 'validationDetails' confirming the key checks.
 
 If ANY check fails:
 - Set 'isValid' to false.
@@ -122,7 +122,7 @@ const validateReceiptImageFlow = ai.defineFlow(
         };
     }
 
-    // 2. Image Compression & Hashing
+    // 2. Image Compression & Hashing to detect image reuse and prevent fraud.
     const imageBuffer = Buffer.from(input.photoDataUri.split(',')[1], 'base64');
     
     const compressedImageBuffer = await sharp(imageBuffer)
