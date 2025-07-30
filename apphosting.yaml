@@ -1,7 +1,16 @@
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
+# The name of the GitHub repository to connect to.
+# The format is `owner/repository-name`.
+repository: 'gabrielm8882/ClickBag.web'
+
 runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
+
+# Specifies the build commands for your Next.js application.
+buildConfig:
+  # This command is executed to build your application.
+  buildCommand: 'npm run build'
