@@ -1,7 +1,11 @@
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
 import { validateReceiptImageFlow } from './src/ai/flows/validate-receipt-image';
-import { deleteSubmission, updateUserPoints, extendUserTreeLimit } from './src/ai/flows/admin-actions';
+import {
+  deleteSubmission,
+  updateUserPoints,
+  extendUserTreeLimit,
+} from './src/ai/flows/admin-actions';
 
 console.log('Flows registered:', [
   validateReceiptImageFlow.name,
