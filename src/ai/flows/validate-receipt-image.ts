@@ -9,7 +9,7 @@
  * - ValidateReceiptImageOutput - The return type for the validateReceiptImage function.
  */
 
-import {ai} from '@/ai/genkit';
+import genkit from 'genkit'; // Corrected import
 import {z} from 'genkit';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, Timestamp, collection, addDoc, getDocs, query, where, runTransaction } from 'firebase/firestore';
@@ -53,7 +53,7 @@ const PromptInputSchema = ValidateReceiptImageInputSchema.extend({
   currentDateTime: z.string().describe('The current server date and time in ISO format.'),
 });
 
-const validateReceiptImagePrompt = ai.definePrompt({
+const validateReceiptImagePrompt = genkit.ai.definePrompt({ // Corrected usage
   name: 'validateReceiptImagePrompt',
   input: {schema: PromptInputSchema},
   output: {schema: ValidateReceiptImageOutputSchema},
@@ -100,7 +100,7 @@ Respond in JSON format, as specified in the output schema. Be verbose and descri
 `,
 });
 
-const validateReceiptImageFlow = ai.defineFlow(
+export const validateReceiptImageFlow = genkit.defineFlow( // Corrected usage
   {
     name: 'validateReceiptImageFlow',
     inputSchema: ValidateReceiptImageInputSchema,
@@ -132,7 +132,7 @@ const validateReceiptImageFlow = ai.defineFlow(
 
     // 2. Image Compression & Hashing to detect image reuse and prevent fraud.
     const imageBuffer = Buffer.from(input.photoDataUri.split(',')[1], 'base64');
-    
+
     const compressedImageBuffer = await sharp(imageBuffer)
         .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
         .jpeg({ quality: 80 })
@@ -167,7 +167,7 @@ const validateReceiptImageFlow = ai.defineFlow(
     if (!output) {
       throw new Error('AI validation failed to produce an output.');
     }
-    
+
     // 5. Receipt Content Hash Check
     let receiptContentHash: string | null = null;
     if (output.isValid && output.storeName && output.receiptDate && output.totalAmount) {
@@ -175,7 +175,7 @@ const validateReceiptImageFlow = ai.defineFlow(
         receiptContentHash = crypto.createHash('sha256').update(contentString).digest('hex');
 
         const contentQuery = query(
-            submissionsRef, 
+            submissionsRef,
             where('userId', '==', uid),
             where('receiptContentHash', '==', receiptContentHash)
         );
@@ -209,7 +209,7 @@ const validateReceiptImageFlow = ai.defineFlow(
 
         if (output.isValid) {
             const communityStatsRef = doc(db, 'community-stats', 'global');
-            
+
             // Get current docs within the transaction
             const userDocTransaction = await transaction.get(userDocRef);
             const communityStatsDocTransaction = await transaction.get(communityStatsRef);
@@ -218,21 +218,21 @@ const validateReceiptImageFlow = ai.defineFlow(
             const currentPoints = userDocTransaction.data()?.totalPoints || 0;
             const newTotalPoints = currentPoints + output.clickPoints;
             const newTotalTrees = Math.floor(newTotalPoints / POINTS_PER_TREE);
-            
+
             if (!userDocTransaction.exists()) {
-                 transaction.set(userDocRef, { 
+                 transaction.set(userDocRef, {
                     displayName: userDisplayName || 'Anonymous',
                     email: userEmail || 'N/A',
-                    totalPoints: newTotalPoints, 
-                    totalTrees: newTotalTrees 
+                    totalPoints: newTotalPoints,
+                    totalTrees: newTotalTrees
                 });
             } else {
-                 transaction.update(userDocRef, { 
-                    totalPoints: newTotalPoints, 
-                    totalTrees: newTotalTrees 
+                 transaction.update(userDocRef, {
+                    totalPoints: newTotalPoints,
+                    totalTrees: newTotalTrees
                 });
             }
-            
+
             // Update Community Stats
             const currentCommunityPoints = communityStatsDocTransaction.data()?.totalClickPoints || 0;
             const currentCommunityTrees = communityStatsDocTransaction.data()?.totalTreesPlanted || 0;
@@ -240,14 +240,14 @@ const validateReceiptImageFlow = ai.defineFlow(
             const newCommunityTrees = currentCommunityTrees + TREES_PER_VALIDATION;
 
             if (!communityStatsDocTransaction.exists()) {
-                transaction.set(communityStatsRef, { 
-                    totalClickPoints: newCommunityPoints, 
-                    totalTreesPlanted: newCommunityTrees 
+                transaction.set(communityStatsRef, {
+                    totalClickPoints: newCommunityPoints,
+                    totalTreesPlanted: newCommunityTrees
                 });
             } else {
-                transaction.update(communityStatsRef, { 
-                    totalClickPoints: newCommunityPoints, 
-                    totalTreesPlanted: newCommunityTrees 
+                transaction.update(communityStatsRef, {
+                    totalClickPoints: newCommunityPoints,
+                    totalTreesPlanted: newCommunityTrees
                 });
             }
         }
@@ -256,7 +256,7 @@ const validateReceiptImageFlow = ai.defineFlow(
       console.error("Transaction failed: ", e);
       throw new Error("Failed to save submission and update points. Please try again.");
     }
-    
+
     return output;
   }
 );
