@@ -14,6 +14,8 @@ import { cn } from '@/lib/utils';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import HeroSection from "@/components/HeroSection";
+import HowItWorksSection from "@/components/HowItWorksSection"; // Import the new HowItWorksSection component
 
 function AnimatedCounter({ end, duration = 2000, className }: { end: number; duration?: number, className?: string }) {
   const [count, setCount] = useState(0);
@@ -56,135 +58,21 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
-  const features = [
-    {
-      icon: <Package className="h-10 w-10 text-accent" />,
-      title: 'Get your ClickBag',
-      description: 'Receive your FREE bag via package, by following us on Instagram (@click_bag_), or get it on the street. Sponsored messages on the bag fund tree planting at no cost to you.',
-    },
-    {
-      icon: <ScanLine className="h-10 w-10 text-accent" />,
-      title: 'Scan & upload',
-      description: 'Use your phone to scan the QR code on your ClickBag, then upload photos of your receipt and purchase.',
-    },
-    {
-      icon: <Coins className="h-10 w-10 text-accent" />,
-      title: 'Earn ClickPoints',
-      description: 'Our AI validates your submission, awarding you ClickPoints for every sustainable choice you make.',
-    },
-    {
-      icon: <Leaf className="h-10 w-10 text-accent" />,
-      title: 'Plant trees',
-      description: 'Your accumulated ClickPoints contribute directly to tree planting projects around the world.',
-    },
-  ];
-
-  const isTreesLocked = communityStats.totalTreesPlanted < 100;
-  const isPointsLocked = communityStats.totalClickPoints < 1000;
-  
   const FADE_UP_ANIMATION_VARIANTS = {
     hidden: { opacity: 0, y: 10 },
     show: { opacity: 1, y: 0, transition: { type: 'spring' } },
   };
 
+  const isTreesLocked = communityStats.totalTreesPlanted < 100;
+  const isPointsLocked = communityStats.totalClickPoints < 1000;
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="w-full py-20 md:py-24 bg-secondary">
-        <motion.div
-          initial="hidden"
-          animate="show"
-          viewport={{ once: true }}
-          variants={{
-            hidden: {},
-            show: {
-              transition: {
-                staggerChildren: 0.15,
-              },
-            },
-          }}
-          className="container mx-auto px-4 md:px-6 text-center"
-        >
-          <motion.h1
-            variants={FADE_UP_ANIMATION_VARIANTS}
-            className="font-headline text-4xl md:text-6xl font-bold tracking-tighter text-primary"
-          >
-            Turn your{' '}
-            <span className="font-cursive text-[2.5rem] md:text-[4.3rem] text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
-              purchases
-            </span>{' '}
-            into planted{' '}
-            <span className="font-cursive text-[2.5rem] md:text-[4.3rem] text-accent [text-shadow:0_0_8px_hsl(var(--accent))] italic">
-              trees
-            </span>
-          </motion.h1>
-          <motion.p
-            variants={FADE_UP_ANIMATION_VARIANTS}
-            className="mx-auto max-w-[700px] text-muted-foreground md:text-xl mt-4"
-          >
-            What if you could reforest the earth without spending time, laying a dime or moving a muscle?
-          </motion.p>
-          <motion.div
-            variants={FADE_UP_ANIMATION_VARIANTS}
-            className="mt-8"
-          >
-            <Link href="/register">
-              <Button size="lg" className="shadow-lg shadow-accent/50 hover:shadow-accent/70 transition-shadow">
-                Get started <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </motion.div>
-        </motion.div>
-      </section>
+      <HeroSection />
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="w-full py-16 md:py-20 bg-secondary">
-        <div className="container mx-auto px-4 md:px-6">
-          <motion.div
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-            variants={FADE_UP_ANIMATION_VARIANTS}
-            className="text-center"
-          >
-            <h2 className="font-headline text-3xl md:text-4xl font-bold">Simple steps to a greener world</h2>
-            <p className="text-muted-foreground md:text-lg mt-2">Making an impact has never been easier.</p>
-          </motion.div>
-          <motion.div
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.2 }}
-            variants={{
-                hidden: {},
-                show: {
-                transition: {
-                    staggerChildren: 0.15,
-                },
-                },
-            }}
-            className="grid gap-8 md:grid-cols-1 lg:grid-cols-4 mt-12"
-          >
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                variants={FADE_UP_ANIMATION_VARIANTS}
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.2, ease: 'easeInOut' }}
-              >
-                <Card className="text-center h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
-                  <CardHeader>
-                    <div className="mx-auto bg-accent/10 p-4 rounded-full w-fit">{feature.icon}</div>
-                    <CardTitle className="font-headline mt-4">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
+      <HowItWorksSection /> {/* Use the new HowItWorksSection component */}
 
       {/* Mission and Sponsors Section */}
       <section className="w-full py-16 md:py-20">
@@ -224,7 +112,7 @@ export default function Home() {
           </div>
         </motion.div>
       </section>
-      
+
       {/* Aggregate Progress Display */}
       <section className="w-full py-16 md:py-24 bg-secondary">
         <motion.div
